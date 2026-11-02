@@ -1,0 +1,43 @@
+---
+title: AI 推荐黑名单
+layout: admin
+menu: ai-blacklist
+only: school
+crumb: 社会实践基地资源库 / AI 智能匹配 / 推荐黑名单
+---
+<div class="page-hd">
+  <div><h1>AI 智能匹配配置</h1><p>调整推荐因子权重、查看效果数据、设置推荐黑名单；所有参数修改记录写入操作日志</p></div>
+  <div class="actions"><button class="btn btn-primary" onclick="openModal('addM')"><i data-lucide="plus"></i>添加黑名单</button></div>
+</div>
+<div class="tabs"><a href="ai-weights.html"><i data-lucide="sliders-horizontal"></i>因子权重</a><a href="ai-effect.html"><i data-lucide="activity"></i>效果数据</a><a class="on" href="ai-blacklist.html"><i data-lucide="ban"></i>推荐黑名单</a></div>
+
+<div class="alert alert-warn mb-16"><i data-lucide="info"></i>黑名单中的基地 / 案例不参与 AI 推荐计算，但仍在数字地图、检索和榜单中正常展示。</div>
+
+<div class="card">
+  <div class="card-hd">
+    <div class="chips" data-chips="single"><span class="chip on">全部 4</span><span class="chip">基地 3</span><span class="chip">案例 1</span></div>
+    <div class="input-ic" style="width:240px"><i data-lucide="search"></i><input class="input" placeholder="搜索名称"></div>
+  </div>
+  <table class="table">
+    <thead><tr><th>类型</th><th>名称</th><th>加入原因</th><th>生效范围</th><th>操作人</th><th>加入时间</th><th>操作</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag tag-blue">基地</span></td><td>酒泉卫星发射中心</td><td class="muted">需定向组织，暂不公开推荐</td><td>全部学生</td><td>王建国</td><td class="num muted">2026-10-20</td><td><a class="btn-text" onclick="this.closest('tr').remove();toast('已移出黑名单')">移出</a></td></tr>
+      <tr><td><span class="tag tag-blue">基地</span></td><td>塞罕坝机械林场</td><td class="muted">冬季闭园（11 月至次年 3 月）</td><td>全部学生</td><td>王建国</td><td class="num muted">2026-10-18</td><td><a class="btn-text" onclick="this.closest('tr').remove();toast('已移出黑名单')">移出</a></td></tr>
+      <tr><td><span class="tag tag-blue">基地</span></td><td>航天科技集团总装测试基地</td><td class="muted">涉密基地，仅限定向推荐</td><td>除航天相关专业外</td><td>王建国</td><td class="num muted">2026-09-02</td><td><a class="btn-text" onclick="this.closest('tr').remove();toast('已移出黑名单')">移出</a></td></tr>
+      <tr><td><span class="tag tag-orange">案例</span></td><td>旧城改造口述史</td><td class="muted">案例已下架</td><td>全部学生</td><td>王建国</td><td class="num muted">2026-10-25</td><td><a class="btn-text" onclick="this.closest('tr').remove();toast('已移出黑名单')">移出</a></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="modal-mask" id="addM">
+  <div class="modal">
+    <div class="modal-hd">添加推荐黑名单<span class="x" onclick="closeModal('addM')"><i data-lucide="x"></i></span></div>
+    <div class="modal-bd" style="display:grid;gap:14px">
+      <div class="field"><label><span class="req">*</span>类型</label><div class="chips" data-chips="single"><span class="chip on">基地</span><span class="chip">案例</span></div></div>
+      <div class="field"><label><span class="req">*</span>选择对象</label><div class="input-ic"><i data-lucide="search"></i><input class="input" placeholder="输入名称搜索" value="上海洋山深水港"></div></div>
+      <div class="field"><label>生效范围</label><select class="select"><option>全部学生</option><option>指定学院</option><option>指定专业</option></select></div>
+      <div class="field"><label><span class="req">*</span>加入原因</label><textarea class="textarea">近 30 天点击率 6.3%，不感兴趣反馈 41 次，暂停推荐观察。</textarea></div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('addM')">取消</button><button class="btn btn-primary" onclick="closeModal('addM');toast('已加入黑名单，操作已记录日志')">确认添加</button></div>
+  </div>
+</div>

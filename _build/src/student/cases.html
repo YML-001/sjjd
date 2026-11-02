@@ -1,0 +1,221 @@
+---
+title: 优秀案例榜
+layout: student
+menu: cases
+crumb: 首页 / 资源榜单 / 优秀案例榜
+inject: data
+---
+<style>
+.case-list{display:grid;gap:14px}
+.case-item{display:flex;gap:20px;background:#fff;border-radius:12px;padding:16px;border:1px solid #ECEEF2;transition:.25s}
+.case-item:hover{box-shadow:0 12px 28px rgba(16,24,40,.08);border-color:#DCE4F2}
+.case-item .cv{position:relative;width:240px;height:150px;border-radius:8px;overflow:hidden;flex-shrink:0}
+.case-item .cv img{width:100%;height:100%}
+.case-item .rk{position:absolute;left:0;top:0;padding:2px 10px;border-radius:0 0 8px 0;font-size:13px;font-weight:700;color:#fff;background:rgba(17,24,39,.65)}
+.case-item .rk.top{background:linear-gradient(135deg,#F5A524,#E11D48)}
+.case-item .bd{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+.case-item h3{font-size:17px;font-weight:600}
+.case-item h3 a:hover{color:var(--primary)}
+.case-item .meta{display:flex;gap:18px;color:var(--text-3);font-size:13px}
+.case-item .meta span{display:flex;align-items:center;gap:4px}
+.case-item .sum{color:var(--text-2);font-size:13px}
+.case-item .ops{display:flex;gap:10px;margin-top:auto;align-items:center}
+.side-box{position:sticky;top:84px;display:grid;gap:16px}
+.hot-tag{display:flex;flex-wrap:wrap;gap:8px}
+.layout{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start}
+</style>
+
+<div class="tabs"><a href="ranking.html"><i data-lucide="flame"></i>活跃基地榜</a><a class="on" href="cases.html"><i data-lucide="award"></i>优秀案例榜</a></div>
+
+<div class="card card-bd mb-16" style="padding:14px 20px">
+  <div class="filter-bar">
+    <select class="select"><option>全部学年</option><option>2025-2026 学年</option><option>2024-2025 学年</option><option>2023-2024 学年</option></select>
+    <select class="select" id="catSel"><option>全部实践主题</option></select>
+    <select class="select" id="colSel"><option>全部学院</option></select>
+    <div class="input-ic" style="width:260px"><i data-lucide="search"></i><input class="input" placeholder="搜索案例标题、实践地点"></div>
+    <button class="btn btn-primary"><i data-lucide="filter"></i>筛选</button>
+    <span class="muted small" style="margin-left:auto">数据来源：第二课堂已结项评优项目 + 管理员遴选入库</span>
+  </div>
+</div>
+
+<div class="layout">
+  <div>
+    <div class="case-list" id="list"></div>
+    <div class="pager"><span class="total">共 312 个优秀案例</span><a><i data-lucide="chevron-left"></i></a><a class="on">1</a><a>2</a><a>3</a><span>…</span><a>32</a><a><i data-lucide="chevron-right"></i></a></div>
+  </div>
+  <div class="side-box">
+    <div class="card">
+      <div class="card-hd"><h3>热门实践主题</h3></div>
+      <div class="card-bd hot-tag" id="hotTags"></div>
+    </div>
+    <div class="card" style="background:linear-gradient(135deg,#1E40AF,#2563EB);color:#fff;border:none">
+      <div class="card-bd">
+        <div class="flex gap-8 strong" style="font-size:16px"><i data-lucide="sparkles"></i>不知道选什么主题？</div>
+        <p class="small mt-8" style="opacity:.85">AI 会根据你的专业、意向地点和兴趣，推荐适合的基地与同主题优秀案例，还能一键复制申报模板。</p>
+        <a class="btn mt-16" style="width:100%;color:var(--primary);border:none" href="ai-match.html">为我智能推荐<i data-lucide="arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('catSel').innerHTML += CATS.map(c => `<option>${c.name}</option>`).join('');
+document.getElementById('colSel').innerHTML += COLLEGES.map(c => `<option>${c}</option>`).join('');
+document.getElementById('hotTags').innerHTML = [7, 5, 10, 8, 4, 0, 11, 17].map(i => catTag(i)).join('');
+document.getElementById('list').innerHTML = CASES.slice(0, 8).map((c, i) => `
+  <div class="case-item">
+    <div class="cv"><img data-shot="案例封面" src="${img(c.img, 480, 300)}" alt=""><span class="rk ${i < 3 ? 'top' : ''}">NO.${i + 1}</span></div>
+    <div class="bd">
+      <h3><a href="case-detail.html?id=${c.id}">${htmlEsc(c.title)}</a></h3>
+      <div class="flex gap-8">${catTag(c.c)}<span class="tag">${c.year} 学年</span>${c.level === '国家级立项' ? '<span class="tag tag-red"><i data-lucide="medal"></i>国家级立项</span>' : ''}</div>
+      <div class="meta"><span><i data-lucide="building-2"></i>${htmlEsc(c.col)}</span><span><i data-lucide="map-pin"></i>${htmlEsc(c.place)}</span><span><i data-lucide="eye"></i>${c.views.toLocaleString()} 次浏览</span></div>
+      <p class="sum clamp-2">成果摘要：${htmlEsc(c.summary)}</p>
+      <div class="ops"><a class="btn btn-sm btn-primary" href="case-detail.html?id=${c.id}">查看案例</a>
+        <button class="btn btn-sm" onclick="toast('已复制申报模板框架到剪贴板')"><i data-lucide="copy"></i>复制申报模板</button>
+        <button class="btn btn-sm" onclick="toast('已加入我的收藏')"><i data-lucide="star"></i>收藏</button></div>
+    </div>
+  </div>`).join('');
+</script>
+
+<!-- 内容图灯箱 -->
+<script>
+// 内容图灯箱：点哪张看哪张；同一组可左右切换。关闭大图不离开当前页，也不关掉底下的弹窗。
+(function () {
+  if (document.getElementById('shotViewer')) return;
+  var css = document.createElement('style');
+  css.textContent = ''
+    + 'img[data-shot],[data-shots] img{cursor:zoom-in}'
+    + '.shot-viewer{position:fixed;inset:0;z-index:240;background:rgba(15,23,42,.86);display:none;align-items:center;justify-content:center}'
+    + '.shot-viewer.show{display:flex}'
+    + '.shot-viewer img{flex:0 0 auto;max-width:min(1080px,82vw);max-height:82vh;width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,.45);background:#111827;cursor:default}'
+    + '.shot-viewer .x,.shot-viewer .nav{position:absolute;z-index:2;display:grid;place-items:center;cursor:pointer;color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.28);user-select:none}'
+    + '.shot-viewer .x{right:22px;top:18px;width:36px;height:36px;border-radius:50%}'
+    + '.shot-viewer .nav{top:50%;width:42px;height:64px;margin-top:-32px;border-radius:8px}'
+    + '.shot-viewer .prev{left:18px}.shot-viewer .next{right:18px}'
+    + '.shot-viewer .cap{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#E5E7EB;font-size:13px;letter-spacing:1px;pointer-events:none}';
+  document.head.appendChild(css);
+
+  var box = document.createElement('div');
+  box.className = 'shot-viewer';
+  box.id = 'shotViewer';
+  box.innerHTML = '<span class="x" title="关闭"><i data-lucide="x"></i></span>'
+    + '<span class="nav prev" title="上一张"><i data-lucide="chevron-left"></i></span>'
+    + '<img alt="大图">'
+    + '<span class="nav next" title="下一张"><i data-lucide="chevron-right"></i></span>'
+    + '<span class="cap">图片</span>';
+  document.body.appendChild(box);
+
+  var urls = [], index = 0, label = '图片';
+  var big = box.querySelector('img');
+  var cap = box.querySelector('.cap');
+  var prev = box.querySelector('.prev');
+  var next = box.querySelector('.next');
+
+  function enlarge(src) {
+    var w = /[?&]w=(\d+)/.exec(src);
+    var h = /[?&]h=(\d+)/.exec(src);
+    if (!w) return src;
+    var nw = 1600;
+    var nh = h ? Math.max(1, Math.round(Number(h[1]) * nw / Number(w[1]))) : 0;
+    var out = src.replace(/([?&])w=\d+/, '$1w=' + nw);
+    if (nh) out = out.replace(/([?&])h=\d+/, '$1h=' + nh);
+    return out;
+  }
+  var token = 0;
+  function fit() {
+    if (!big.naturalWidth || !big.naturalHeight) return;
+    var maxW = Math.min(1080, window.innerWidth * 0.82);
+    var maxH = window.innerHeight * 0.82;
+    var scale = Math.min(maxW / big.naturalWidth, maxH / big.naturalHeight);
+    big.style.width = Math.max(1, Math.round(big.naturalWidth * scale)) + 'px';
+    big.style.height = Math.max(1, Math.round(big.naturalHeight * scale)) + 'px';
+  }
+  function paint() {
+    var my = ++token;
+    var thumb = urls[index];
+    var full = enlarge(thumb);
+    function apply(src) {
+      if (my !== token) return;
+      if (big.src === src && big.complete && big.naturalWidth) { fit(); return; }
+      big.onload = function () { if (my === token) fit(); };
+      big.src = src;
+      if (my === token && big.complete && big.naturalWidth) fit();
+    }
+    // 先用页面上已经加载的缩略图撑开大图，再换成更高清的地址
+    apply(thumb);
+    if (full !== thumb) {
+      var pre = new Image();
+      pre.onload = function () { apply(full); };
+      pre.src = full;
+    }
+    cap.textContent = label + ' ' + (index + 1) + ' / ' + urls.length;
+    var single = urls.length < 2;
+    prev.style.display = single ? 'none' : '';
+    next.style.display = single ? 'none' : '';
+  }
+
+  function open(list, i, lab) {
+    urls = list;
+    index = i;
+    label = lab || '图片';
+    paint();
+    box.classList.add('show');
+    if (window.refreshIcons) refreshIcons();
+  }
+  function step(d) {
+    if (urls.length < 2) return;
+    index = (index + d + urls.length) % urls.length;
+    paint();
+  }
+  function close() { box.classList.remove('show'); }
+
+  box.addEventListener('click', function (e) { if (e.target === box) close(); });
+  box.querySelector('.x').addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    close();
+  });
+  prev.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(-1);
+  });
+  next.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(1);
+  });
+
+  function shotFromEvent(e) {
+    var t = e.target;
+    if (!t) return null;
+    if (t.nodeType !== 1) t = t.parentElement;
+    if (!t || !t.closest) return null;
+    var im = t.closest('img');
+    if (!im || im.closest('.shot-viewer')) return null;
+    if (!im.hasAttribute('data-shot') && !im.closest('[data-shots]')) return null;
+    return im;
+  }
+  function onPick(e) {
+    var im = shotFromEvent(e);
+    if (!im) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var group = im.closest('[data-shots]');
+    if (group) {
+      var imgs = Array.prototype.slice.call(group.querySelectorAll('img'));
+      open(imgs.map(function (el) { return el.currentSrc || el.src; }), Math.max(0, imgs.indexOf(im)), group.getAttribute('data-shots') || '图片');
+    } else {
+      open([im.currentSrc || im.src], 0, im.getAttribute('data-shot') || '图片');
+    }
+  }
+  document.addEventListener('click', onPick, true);
+  document.addEventListener('auxclick', onPick, true);
+  document.addEventListener('keydown', function (e) {
+    if (!box.classList.contains('show')) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+  }, true);
+})();
+</script>

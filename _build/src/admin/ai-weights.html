@@ -1,0 +1,80 @@
+---
+title: AI 因子权重配置
+layout: admin
+menu: ai-weights
+only: school
+crumb: 社会实践基地资源库 / AI 智能匹配 / 因子权重配置
+---
+<style>
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.factor{display:flex;gap:14px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.factor:last-of-type{border:none}
+.factor .ic{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;flex-shrink:0}
+.factor .bd{flex:1}
+.factor .hd{display:flex;justify-content:space-between;margin-bottom:6px}
+.factor .hd b{font-weight:600}
+.factor .hd em{font-style:normal;color:var(--primary);font-weight:700;font-size:16px}
+.factor small{color:var(--text-3);font-size:12px;display:block;margin-bottom:6px}
+input[type=range]{width:100%;accent-color:var(--primary)}
+.sum{display:flex;justify-content:space-between;padding:12px 14px;border-radius:8px;background:var(--success-l);color:#166534;font-size:13px;margin-top:8px}
+.sum.bad{background:var(--danger-l);color:#991B1B}
+.sim-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.sim-item:last-child{border:none}
+.sim-item .no{width:24px;height:24px;border-radius:6px;background:var(--primary-l);color:var(--primary);display:grid;place-items:center;font-size:12px;font-weight:700}
+.sim-item .t{flex:1}
+.sim-item .p{color:var(--primary);font-weight:600}
+</style>
+
+<div class="page-hd">
+  <div><h1>AI 智能匹配配置</h1><p>调整推荐因子权重、查看效果数据、设置推荐黑名单；所有参数修改记录写入操作日志</p></div>
+  <div class="actions"><button class="btn" onclick="toast('已恢复为默认权重')">恢复默认</button><button class="btn btn-primary" onclick="save()"><i data-lucide="save"></i>保存并发布</button></div>
+</div>
+<div class="tabs"><a class="on" href="ai-weights.html"><i data-lucide="sliders-horizontal"></i>因子权重</a><a href="ai-effect.html"><i data-lucide="activity"></i>效果数据</a><a href="ai-blacklist.html"><i data-lucide="ban"></i>推荐黑名单</a></div>
+
+<div class="layout">
+  <div class="card">
+    <div class="card-hd"><h3>匹配因子权重</h3><span class="muted small">当前版本 v1.6 · 2026-10-26 11:02 发布</span></div>
+    <div class="card-bd">
+      <div class="factor"><span class="ic" style="background:#EFF4FF;color:#2563EB"><i data-lucide="graduation-cap"></i></span><div class="bd"><div class="hd"><b>专业权重</b><em id="v0">40%</em></div><small>学生学院、专业、年级与基地实践方向的相关度</small><input type="range" min="0" max="100" value="40" data-i="0"></div></div>
+      <div class="factor"><span class="ic" style="background:#EAF7EE;color:#16A34A"><i data-lucide="map-pin"></i></span><div class="bd"><div class="hd"><b>地理位置权重</b><em id="v1">25%</em></div><small>意向实践地点与基地距离、生源地</small><input type="range" min="0" max="100" value="25" data-i="1"></div></div>
+      <div class="factor"><span class="ic" style="background:#FDEDEF;color:#C8102E"><i data-lucide="tags"></i></span><div class="bd"><div class="hd"><b>实践主题标签权重</b><em id="v2">35%</em></div><small>申报主题标签、浏览行为与过往实践标签</small><input type="range" min="0" max="100" value="35" data-i="2"></div></div>
+      <div class="sum" id="sum"><span>当前合计</span><b>100%</b></div>
+      <div class="alert alert-info mt-16"><i data-lucide="info"></i>学生「不感兴趣」反馈会自动降低同类基地在该学生结果中的排序，不受全局权重影响。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><h3>推荐结果模拟</h3><select class="select" style="width:220px"><option>样本：计算机学院 · 软件工程 · 意向湖南 · 乡村振兴</option><option>样本：医学院 · 临床医学 · 意向长沙 · 健康中国</option></select></div>
+    <div class="card-bd" id="sim"></div>
+  </div>
+</div>
+
+<div class="card mt-16">
+  <div class="card-hd"><h3>版本记录</h3></div>
+  <table class="table">
+    <thead><tr><th>版本</th><th>专业</th><th>地理位置</th><th>主题标签</th><th>发布人</th><th>发布时间</th><th>发布后点击率</th></tr></thead>
+    <tbody>
+      <tr><td><b>v1.6</b> <span class="tag tag-green">当前</span></td><td>40%</td><td>25%</td><td>35%</td><td>王建国</td><td class="num muted">2026-10-26 11:02</td><td class="muted">统计中</td></tr>
+      <tr><td>v1.5</td><td>40%</td><td>20%</td><td>40%</td><td>王建国</td><td class="num muted">2026-09-01 09:30</td><td class="num">18.6%</td></tr>
+      <tr><td>v1.4</td><td>50%</td><td>20%</td><td>30%</td><td>王建国</td><td class="num muted">2026-06-15 14:12</td><td class="num">15.2%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+const ITEMS = [['十八洞村乡村振兴示范点', [.5, .9, 1]], ['国家超级计算长沙中心', [1, .9, .3]], ['三一重工“灯塔工厂”', [.8, .9, .4]], ['浏阳大围山镇乡村振兴点', [.3, .8, 1]], ['华为松山湖研发基地', [1, .3, .2]]];
+const weights = () => [...document.querySelectorAll('input[type=range]')].map(r => +r.value);
+function sim(){
+  const w = weights();
+  const list = ITEMS.map(([n, f]) => [n, f.reduce((s, v, i) => s + v * w[i], 0)]).sort((a, b) => b[1] - a[1]);
+  document.getElementById('sim').innerHTML = list.map((x, i) => `<div class="sim-item"><span class="no">${i + 1}</span><span class="t">${x[0]}</span><span class="p num">${Math.round(x[1])}%</span></div>`).join('')
+    + '<div class="muted small mt-12">拖动左侧权重滑块，实时查看推荐排序变化</div>';
+}
+document.querySelectorAll('input[type=range]').forEach(r => r.addEventListener('input', () => {
+  document.getElementById('v' + r.dataset.i).textContent = r.value + '%';
+  const t = weights().reduce((a, b) => a + b, 0), box = document.getElementById('sum');
+  box.classList.toggle('bad', t !== 100); box.innerHTML = `<span>${t === 100 ? '当前合计' : '合计须为 100%，当前'}</span><b>${t}%</b>`; sim();
+}));
+function save(){ const t = weights().reduce((a, b) => a + b, 0); toast(t === 100 ? '已发布 v1.7，修改前后内容已写入操作日志' : '权重合计须为 100%', t === 100 ? 'check-circle-2' : 'alert-circle'); }
+sim();
+</script>

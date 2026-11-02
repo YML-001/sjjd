@@ -1,0 +1,52 @@
+---
+title: 消息中心
+layout: student
+menu: messages
+crumb: 首页 / 消息中心
+---
+<style>
+.layout{display:grid;grid-template-columns:220px 1fr;gap:20px;align-items:start}
+.cats a{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;cursor:pointer;color:var(--text-2);transition:.15s}
+.cats a:hover{background:#F5F7FB}
+.cats a.on{background:var(--primary-l);color:var(--primary);font-weight:600}
+.cats a em{margin-left:auto;font-style:normal;font-size:12px;background:#F43F5E;color:#fff;border-radius:9px;padding:0 6px}
+.msg{display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid var(--line);cursor:pointer;transition:.15s;position:relative}
+.msg:hover{background:#FAFBFE}
+.msg.unread::before{content:"";position:absolute;left:8px;top:24px;width:6px;height:6px;border-radius:50%;background:#F43F5E}
+.msg .ic{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;flex-shrink:0}
+.msg .bd{flex:1;min-width:0}
+.msg .t{display:flex;justify-content:space-between;gap:10px}
+.msg .t b{font-weight:600}
+.msg .t span{font-size:12px;color:var(--text-3);white-space:nowrap}
+.msg p{color:var(--text-2);font-size:13px;margin-top:4px}
+.msg .sync{font-size:11px;color:#0D9488;background:#E6F7F5;border-radius:4px;padding:0 6px;margin-left:8px;font-weight:400}
+</style>
+
+<div class="page-hd">
+  <div><h1>消息中心</h1><p>资源更新与系统通知已同步至第二课堂阅办消息</p></div>
+  <div class="actions"><button class="btn" onclick="document.querySelectorAll('.msg').forEach(m=>m.classList.remove('unread'));toast('已全部标为已读')"><i data-lucide="check-check"></i>全部已读</button></div>
+</div>
+
+<div class="layout">
+  <div class="card card-bd cats" style="padding:10px" id="cats">
+    <a class="on" data-v=""><i data-lucide="inbox"></i>全部消息<em>2</em></a>
+    <a data-v="res"><i data-lucide="refresh-cw"></i>资源更新<em>2</em></a>
+    <a data-v="sys"><i data-lucide="megaphone"></i>系统通知</a>
+  </div>
+  <div class="card" id="list">
+    <div class="msg unread" data-c="res" onclick="location.href='base-detail.html'"><span class="ic" style="background:var(--primary-l);color:var(--primary)"><i data-lucide="file-up"></i></span>
+      <div class="bd"><div class="t"><b>收藏的基地有资源更新<em class="sync">已同步第二课堂</em></b><span>今天 09:30</span></div><p>「韶山毛泽东同志纪念馆」更新了《实践安全手册（2026 版）》，点击查看。</p></div></div>
+    <div class="msg unread" data-c="res" onclick="location.href='ai-match.html'"><span class="ic" style="background:#F3E8FF;color:#7C3AED"><i data-lucide="sparkles"></i></span>
+      <div class="bd"><div class="t"><b>新增 3 个与你兴趣匹配的基地</b><span>昨天 18:20</span></div><p>根据你的「乡村振兴、大国重器」兴趣标签，AI 为你推荐了新上线的实践基地。</p></div></div>
+    <div class="msg" data-c="sys"><span class="ic" style="background:var(--warning-l);color:var(--warning)"><i data-lucide="megaphone"></i></span>
+      <div class="bd"><div class="t"><b>2027 年寒假社会实践申报启动</b><span>10-01 09:00</span></div><p>寒假社会实践项目申报将于 11 月 1 日开启，可在资源库提前浏览基地、获取 AI 推荐，并在第二课堂发起项目申报。</p></div></div>
+  </div>
+</div>
+
+<script>
+document.getElementById('cats').addEventListener('click', e => {
+  const a = e.target.closest('a'); if (!a) return;
+  document.querySelectorAll('#cats a').forEach(x => x.classList.remove('on')); a.classList.add('on');
+  document.querySelectorAll('.msg').forEach(m => m.style.display = !a.dataset.v || m.dataset.c === a.dataset.v ? '' : 'none');
+});
+</script>

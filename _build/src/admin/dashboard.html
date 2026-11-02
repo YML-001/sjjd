@@ -1,0 +1,129 @@
+---
+title: 工作台
+layout: admin
+menu: dashboard
+crumb: 社会实践基地资源库 / 工作台
+inject: echarts
+---
+<style>
+.hello{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.hello h1{font-size:22px}
+.hello p{color:var(--text-3);font-size:13px;margin-top:2px}
+.warn-bar{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:12px;margin-bottom:16px;background:linear-gradient(90deg,#FFF1F2,#FFF7ED);border:1px solid #FECDD3}
+.warn-bar .ic{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#F43F5E,#F97316);color:#fff;display:grid;place-items:center;flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(244,63,94,.15)}}
+.warn-bar b{color:#BE123C}
+.warn-bar .txt{flex:1;font-size:13px;color:#7F1D1D}
+.grid-main{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-top:16px}
+.todo a{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.todo a:last-child{border:none}
+.todo .ty{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;flex-shrink:0}
+.todo .t{flex:1;min-width:0}
+.todo .t b{font-weight:500;display:block}
+.todo .t small{color:var(--text-3);font-size:12px}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.quick a{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px;border-radius:10px;background:#F7F9FC;font-size:13px;transition:.2s;text-align:center}
+.quick a:hover{background:var(--primary-l);color:var(--primary)}
+.quick a span{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:#fff;color:var(--primary);box-shadow:var(--shadow)}
+.chart{height:260px}
+.log-item{display:flex;gap:10px;font-size:13px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.log-item:last-child{border:none}
+.log-item time{color:var(--text-3);white-space:nowrap;font-size:12px;width:76px}
+</style>
+
+<div class="hello">
+  <div>
+    <h1 data-only="school">晚上好，王建国老师</h1><h1 data-only="college">晚上好，李敏老师</h1>
+    <p>2026 年 10 月 26 日 星期一 · <span data-only="school">数据范围：全校</span><span data-only="college">数据范围：计算机学院（本院）</span></p>
+  </div>
+  <div class="flex gap-12">
+    <a class="btn" href="data-board.html"><i data-lucide="bar-chart-3"></i>数据看板</a>
+    <a class="btn btn-primary" data-only="school" href="base-edit.html"><i data-lucide="plus"></i>新增基地</a>
+    <a class="btn btn-primary" data-only="college" href="base-edit.html"><i data-lucide="upload"></i>上报新基地</a>
+  </div>
+</div>
+
+<!-- AI 预警：校级看到全部预警并可推送；院级看到校级推送的本院预警 -->
+<div class="warn-bar" data-only="school">
+  <span class="ic"><i data-lucide="siren"></i></span>
+  <div class="txt"><b>AI 资源紧缺预警 · 3 条</b>：预测 2027 春季学期「韶山毛泽东同志纪念馆」实践人次 1,180，超出接待上限 1,000 人次；「十八洞村」「三一重工“灯塔工厂”」同步预警。建议拓展同类主题基地或提升接待容量。</div>
+  <a class="btn btn-sm" href="ai-insight.html">查看洞察</a><button class="btn btn-sm btn-red" onclick="toast('已推送至 3 个相关学院管理员')"><i data-lucide="send"></i>一键推送院级</button>
+</div>
+<div class="warn-bar" data-only="college">
+  <span class="ic"><i data-lucide="siren"></i></span>
+  <div class="txt"><b>校级推送预警</b>：本院共建「国家超级计算长沙中心」下学期预测实践人次 420，超出接待上限 360 人次，建议拓展同类「攀高攻坚」主题基地或协调增加接待批次。<span class="muted">（校团委 · 王建国 推送于 10-25）</span></div>
+  <button class="btn btn-sm" onclick="toast('已标记为跟进中')">标记跟进</button><a class="btn btn-sm btn-primary" href="base-edit.html">上报新基地</a>
+</div>
+
+<div class="stats" data-only="school">
+  <div class="stat"><span class="ic"><i data-lucide="map-pinned"></i></span><div><div class="v num">286<small>个</small></div><div class="l">基地总数 · 本月新增 6</div></div></div>
+  <div class="stat"><span class="ic" style="background:#FEF4E4;color:#D97706"><i data-lucide="inbox"></i></span><div><div class="v num">6<small>个</small></div><div class="l">案例候选待推荐</div></div></div>
+  <div class="stat"><span class="ic" style="background:#F3E8FF;color:#7C3AED"><i data-lucide="file-check-2"></i></span><div><div class="v num">5<small>条</small></div><div class="l">待审核院级上报</div></div></div>
+  <div class="stat"><span class="ic" style="background:#FDEDEF;color:#C8102E"><i data-lucide="award"></i></span><div><div class="v num">8<small>个</small></div><div class="l">待终审优秀案例</div></div></div>
+</div>
+<div class="stats" data-only="college">
+  <div class="stat"><span class="ic"><i data-lucide="map-pinned"></i></span><div><div class="v num">18<small>个</small></div><div class="l">本院上报基地</div></div></div>
+  <div class="stat"><span class="ic" style="background:#FEF4E4;color:#D97706"><i data-lucide="file-pen-line"></i></span><div><div class="v num">1<small>条</small></div><div class="l">上报被驳回待修改</div></div></div>
+  <div class="stat"><span class="ic" style="background:#F3E8FF;color:#7C3AED"><i data-lucide="hourglass"></i></span><div><div class="v num">2<small>条</small></div><div class="l">上报待校级审核</div></div></div>
+  <div class="stat"><span class="ic" style="background:#FDEDEF;color:#C8102E"><i data-lucide="send"></i></span><div><div class="v num">3<small>个</small></div><div class="l">可推荐本院案例</div></div></div>
+</div>
+
+<div class="grid-main">
+  <div class="card">
+    <div class="card-hd"><h3>待办事项</h3><span class="muted small">按提交时间排序</span></div>
+    <div class="card-bd todo" style="padding-top:4px;padding-bottom:4px">
+      <a href="base-report-detail.html" data-only="school"><span class="ty" style="background:#F3E8FF;color:#7C3AED"><i data-lucide="file-check-2"></i></span><span class="t"><b>上报审核 · 计算机学院上报「长沙人工智能创新中心」</b><small>上报人 李敏 · 今天 16:20</small></span><span class="btn btn-sm btn-primary">去审核</span></a>
+      <a href="base-reports.html" data-only="college"><span class="ty" style="background:#F3E8FF;color:#7C3AED"><i data-lucide="hourglass"></i></span><span class="t"><b>上报进度 · 「长沙人工智能创新中心」等待校级审核</b><small>提交于 今天 16:20</small></span><span class="btn btn-sm">查看</span></a>
+      <a href="case-review.html?id=3" data-only="school"><span class="ty" style="background:#FDEDEF;color:#C8102E"><i data-lucide="award"></i></span><span class="t"><b>案例终审 · 走进“灯塔工厂”：智能制造人才需求调研</b><small>机械工程学院推荐 · 昨天 10:12</small></span><span class="btn btn-sm btn-primary">去终审</span></a>
+      <a href="case-pool.html" data-only="college"><span class="ty" style="background:#FDEDEF;color:#C8102E"><i data-lucide="send"></i></span><span class="t"><b>案例推荐 · 候选池新增 3 个本院已结项评优项目</b><small>系统自动抓取 · 昨天 02:00</small></span><span class="btn btn-sm btn-primary">去推荐</span></a>
+      <a href="case-pool.html" data-only="school"><span class="ty" style="background:#FEF4E4;color:#D97706"><i data-lucide="inbox"></i></span><span class="t"><b>案例遴选 · 候选池新增 6 个已结项评优项目待推荐</b><small>系统自动抓取 · 昨天 02:00</small></span><span class="btn btn-sm btn-primary">去处理</span></a>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><h3>快捷入口</h3></div>
+    <div class="card-bd quick">
+      <a href="bases.html"><span><i data-lucide="map-pinned"></i></span>基地管理</a>
+      <a href="base-reports.html"><span><i data-lucide="file-check-2"></i></span>上报审核</a>
+      <a href="case-pool.html"><span><i data-lucide="inbox"></i></span>案例候选池</a>
+      <a href="data-board.html"><span><i data-lucide="bar-chart-3"></i></span>数据看板</a>
+      <a href="tags.html" data-only="school"><span><i data-lucide="tags"></i></span>标签库</a>
+      <a href="ai-insight.html" data-only="school"><span><i data-lucide="sparkles"></i></span>AI 洞察</a>
+      <a href="ai-weights.html" data-only="school"><span><i data-lucide="sliders-horizontal"></i></span>AI 配置</a>
+      <a href="base-reports.html" data-only="college"><span><i data-lucide="file-check-2"></i></span>我的上报</a>
+      <a href="operation-logs.html"><span><i data-lucide="scroll-text"></i></span>操作日志</a>
+      <a href="second-classroom.html"><span><i data-lucide="external-link"></i></span>第二课堂</a>
+    </div>
+  </div>
+</div>
+
+<div class="grid-main">
+  <div class="card">
+    <div class="card-hd"><h3>近 6 个月立项与实践人次</h3><span class="muted small" data-only="college">本院数据</span></div>
+    <div class="card-bd"><div class="chart" id="trend"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><h3>最近操作</h3><a class="more" href="operation-logs.html">全部日志<i data-lucide="chevron-right"></i></a></div>
+    <div class="card-bd">
+      <div class="log-item"><time>今天 20:15</time><span>王建国 终审入库案例「十八洞村产业振兴回访」</span></div>
+      <div class="log-item"><time>今天 16:20</time><span>李敏（计算机学院）上报基地「长沙人工智能创新中心」</span></div>
+      <div class="log-item"><time>今天 11:02</time><span>王建国 修改 AI 因子权重：地理位置 20% → 25%</span></div>
+      <div class="log-item"><time>昨天 17:40</time><span>王建国 下架案例「旧城改造口述史」</span></div>
+      <div class="log-item"><time>昨天 09:18</time><span>周涛（机械工程学院）编辑基地「三一重工“灯塔工厂”」接待容量</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const isSchool = document.documentElement.dataset.role === 'school';
+const k = isSchool ? 1 : 0.12;
+echarts.init(document.getElementById('trend')).setOption({
+  tooltip: { trigger: 'axis' }, legend: { data: ['立项数', '实践人次'], right: 0, top: 0 },
+  grid: { left: 40, right: 40, top: 36, bottom: 24 },
+  xAxis: { type: 'category', data: ['5月', '6月', '7月', '8月', '9月', '10月'], axisLine: { lineStyle: { color: '#CBD5E1' } } },
+  yAxis: [{ type: 'value', splitLine: { lineStyle: { color: '#F1F5F9' } } }, { type: 'value', splitLine: { show: false } }],
+  series: [
+    { name: '立项数', type: 'bar', barWidth: 18, itemStyle: { color: '#2563EB', borderRadius: [4, 4, 0, 0] }, data: [76, 210, 280, 120, 64, 88].map(v => Math.round(v * k)) },
+    { name: '实践人次', type: 'line', yAxisIndex: 1, smooth: true, symbolSize: 7, itemStyle: { color: '#F97316' }, areaStyle: { color: 'rgba(249,115,22,.08)' }, data: [920, 1580, 3240, 2410, 860, 1120].map(v => Math.round(v * k)) }
+  ]
+});
+</script>

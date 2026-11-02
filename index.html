@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>社会实践基地资源库 · 产品原型导航</title>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>
+// 公共脚本：图标渲染、轻提示、弹窗、筛选标签切换
+function refreshIcons(){ window.lucide && lucide.createIcons(); }
+function toast(msg, icon){
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = '<i data-lucide="' + (icon || 'check-circle-2') + '"></i>' + msg;
+  document.body.appendChild(t); refreshIcons();
+  requestAnimationFrame(function(){ t.classList.add('show'); });
+  setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); }, 300); }, 2000);
+}
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+document.addEventListener('click', function(e){
+  var chip = e.target.closest('[data-chips] .chip');
+  if (chip) {
+    var group = chip.parentElement;
+    if (group.dataset.chips === 'single') group.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+    chip.classList.toggle('on');
+  }
+  if (e.target.classList.contains('modal-mask')) e.target.classList.remove('show');
+});
+document.addEventListener('DOMContentLoaded', refreshIcons);
+</script>
+
+<style>
+:root{--primary:#2563EB;--navy:#0B1E4F;--red:#C8102E;--text:#1F2937;--text-2:#4B5563;--text-3:#9CA3AF;--border:#E5E7EB;--bg:#F4F6FA}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg);line-height:1.6;font-size:14px;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+svg.lucide{width:16px;height:16px;stroke-width:2;flex-shrink:0}
+.wrap{width:1240px;max-width:calc(100% - 48px);margin:0 auto}
+.num{font-family:"DIN Alternate","Bahnschrift",Arial,sans-serif}
+
+/* 顶部导航 */
+.topnav{position:sticky;top:0;z-index:50;background:rgba(11,30,79,.92);backdrop-filter:blur(10px);color:#fff}
+.topnav .wrap{height:60px;display:flex;align-items:center;gap:32px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px}
+.brand i{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#3B82F6,#C8102E);display:grid;place-items:center}
+.anchors{display:flex;gap:4px;flex:1}
+.anchors a{padding:6px 12px;border-radius:6px;opacity:.8;font-size:14px;transition:.2s}
+.anchors a:hover{opacity:1;background:rgba(255,255,255,.1)}
+.btn-start{display:flex;align-items:center;gap:6px;height:36px;padding:0 16px;border-radius:8px;background:#fff;color:var(--navy);font-weight:600;transition:.2s}
+.btn-start:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.2)}
+
+/* 头部主视觉 */
+.hero{position:relative;color:#fff;overflow:hidden;background:linear-gradient(120deg,#0B1E4F 0%,#123A9C 55%,#1E4FD8 100%)}
+.hero::before{content:"";position:absolute;inset:0;background:url(https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&q=80&w=1800) center/cover;opacity:.12}
+.hero::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:40px 40px}
+.hero .wrap{position:relative;z-index:1;display:grid;grid-template-columns:1.25fr 1fr;gap:48px;padding:64px 0 72px;align-items:center}
+.hero .eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:13px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:4px 12px;border-radius:20px}
+.hero h1{font-size:42px;line-height:1.25;margin:18px 0 14px;letter-spacing:1px}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,#FDE68A,#FCA5A5);-webkit-background-clip:text;color:transparent}
+.hero p.lead{font-size:16px;opacity:.85;max-width:620px}
+.kpis{display:flex;gap:36px;margin-top:32px}
+.kpis b{display:block;font-size:34px;line-height:1.1}
+.kpis span{font-size:13px;opacity:.7}
+.route{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:22px 24px;backdrop-filter:blur(6px)}
+.route h3{font-size:15px;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.route ol{list-style:none;counter-reset:s}
+.route li{counter-increment:s;display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed rgba(255,255,255,.14)}
+.route li:last-child{border:none}
+.route li::before{content:counter(s);width:22px;height:22px;border-radius:50%;background:#fff;color:var(--navy);font-size:12px;font-weight:700;display:grid;place-items:center;flex-shrink:0;margin-top:1px}
+.route li a{flex:1;display:flex;justify-content:space-between;gap:8px;transition:.2s}
+.route li a:hover{color:#FDE68A}
+.route li small{opacity:.6;font-size:12px}
+
+/* 区块 */
+section{padding:56px 0 8px}
+.sec-hd{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px}
+.sec-hd .no{font-size:13px;color:var(--primary);font-weight:700;letter-spacing:2px}
+.sec-hd h2{font-size:26px;line-height:1.3}
+.sec-hd p{color:var(--text-3);margin-top:4px}
+
+/* 角色卡片 */
+.roles{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.role{background:#fff;border-radius:14px;padding:22px;border:1px solid #ECEEF2;position:relative;overflow:hidden;transition:.25s;display:flex;flex-direction:column}
+.role:hover{transform:translateY(-4px);box-shadow:0 16px 36px rgba(16,24,40,.1)}
+.role::before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:var(--c)}
+.role .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 12%,#fff);color:var(--c);margin-bottom:14px}
+.role .ic svg{width:22px;height:22px}
+.role h3{font-size:17px}
+.role .sub{font-size:12px;color:var(--text-3);margin-bottom:12px}
+.role ul{list-style:none;flex:1}
+.role li{display:flex;gap:6px;font-size:13px;color:var(--text-2);padding:3px 0}
+.role li svg{width:14px;height:14px;color:var(--c);margin-top:4px}
+.role .go{margin-top:16px;display:flex;align-items:center;justify-content:center;gap:6px;height:36px;border-radius:8px;background:var(--c);color:#fff;font-weight:500;transition:.2s}
+.role .go:hover{filter:brightness(1.1)}
+
+/* 模块卡片：每行两个 */
+.group-t{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;margin:28px 0 14px}
+.group-t span{font-size:12px;font-weight:400;color:#fff;background:var(--c);border-radius:4px;padding:1px 8px}
+.group-t small{font-weight:400;color:var(--text-3);font-size:13px}
+.modules{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.mod{background:#fff;border-radius:14px;border:1px solid #ECEEF2;overflow:hidden;transition:.25s}
+.mod:hover{box-shadow:0 16px 36px rgba(16,24,40,.1)}
+.preview{position:relative;height:300px;overflow:hidden;background:#EEF1F6;border-bottom:1px solid #ECEEF2;display:block}
+.preview iframe{width:1440px;height:900px;border:0;transform-origin:0 0;pointer-events:none}
+.preview .mask{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(11,30,79,0);transition:.25s}
+.preview .mask span{opacity:0;transform:translateY(6px);transition:.25s;background:#fff;color:var(--navy);padding:8px 18px;border-radius:20px;font-weight:600;display:flex;gap:6px;align-items:center}
+.preview:hover .mask{background:rgba(11,30,79,.45)}
+.preview:hover .mask span{opacity:1;transform:none}
+.mod-bd{padding:18px 20px}
+.mod-bd h3{font-size:17px;display:flex;align-items:center;gap:8px}
+.mod-bd h3 svg{color:var(--primary);width:18px;height:18px}
+.mod-bd p{color:var(--text-2);font-size:13px;margin:6px 0 12px}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.links a{display:inline-flex;align-items:center;gap:4px;font-size:13px;height:28px;padding:0 10px;border-radius:6px;background:#F3F6FB;color:var(--text-2);transition:.2s}
+.links a:hover{background:var(--primary);color:#fff}
+.links a code{font-size:11px;opacity:.6;font-family:Menlo,monospace}
+
+/* 表格 */
+.panel{background:#fff;border-radius:14px;border:1px solid #ECEEF2;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{background:#F8FAFC;text-align:left;padding:12px 14px;font-weight:600;font-size:13px;color:var(--text-2);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid #F1F2F5;font-size:13px;vertical-align:top}
+tr:last-child td{border-bottom:none}
+.matrix td.m{color:var(--text-3);white-space:nowrap}
+.matrix td.f{font-weight:500}
+.matrix th.role-col,.matrix td.cell{text-align:center;width:150px}
+.p{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:5px;font-size:12px;white-space:nowrap}
+.p-y{background:#EAF7EE;color:#15803D}.p-a{background:#1E40AF;color:#fff}.p-c{background:#E0EBFF;color:#1D4ED8}.p-r{background:#F3F4F6;color:#6B7280}.p-n{color:#D1D5DB}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;font-size:13px;color:var(--text-2);align-items:center}
+.func td ul{padding-left:16px;color:var(--text-2)}
+.func td ul li{padding:1px 0}
+.func .ends{font-size:12px;color:#fff;border-radius:4px;padding:1px 6px;white-space:nowrap}
+.func td a{color:var(--primary);display:block;white-space:nowrap}
+.func td a:hover{text-decoration:underline}
+
+/* 流程图 */
+.flows{display:grid;gap:20px}
+.flow{background:#fff;border-radius:14px;border:1px solid #ECEEF2;padding:20px 22px}
+.flow-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.flow-hd h3{font-size:16px;display:flex;align-items:center;gap:8px}
+.flow-hd h3 b{width:24px;height:24px;border-radius:6px;background:var(--navy);color:#fff;font-size:12px;display:grid;place-items:center}
+.flow-hd .lanes{display:flex;gap:10px;font-size:12px;color:var(--text-3)}
+.flow-hd .lanes i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c);margin-right:4px;vertical-align:-1px}
+.steps{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:4px}
+.step{flex:1;min-width:136px;display:flex;align-items:center}
+.node{flex:1;border-radius:10px;padding:12px;border:1px solid color-mix(in srgb,var(--c) 30%,#fff);background:color-mix(in srgb,var(--c) 6%,#fff);min-height:118px;display:flex;flex-direction:column}
+.node .who{font-size:11px;color:#fff;background:var(--c);border-radius:4px;padding:0 6px;align-self:flex-start;margin-bottom:6px}
+.node .what{font-size:13px;font-weight:500;line-height:1.5}
+.node .br{margin-top:auto;padding-top:8px;font-size:12px;color:#B45309;display:flex;gap:4px}
+.node .br svg{width:13px;height:13px;margin-top:3px}
+.node.dec{border-style:dashed;border-width:1.5px}
+.node.dec .what::before{content:"◆ ";color:var(--c)}
+.node.end{background:var(--c);color:#fff}
+.node.end .who{background:rgba(255,255,255,.25)}
+.arrow{width:26px;flex-shrink:0;display:grid;place-items:center;color:#94A3B8}
+.states{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.state{background:#fff;border-radius:14px;border:1px solid #ECEEF2;padding:18px 20px}
+.state h4{font-size:14px;margin-bottom:12px}
+.state .chain{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:12px}
+.state .chain span{padding:3px 10px;border-radius:12px;background:#F3F6FB}
+.state .chain svg{width:14px;height:14px;color:#94A3B8}
+.state p{font-size:12px;color:var(--text-3);margin-top:10px}
+
+/* 页面地图 */
+.sitemap{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.tree{background:#fff;border-radius:14px;border:1px solid #ECEEF2;padding:18px 20px}
+.tree h4{display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:10px}
+.tree h4 code{font-size:12px;color:var(--text-3);font-weight:400}
+.tree a{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:6px;font-size:13px;transition:.15s}
+.tree a:hover{background:#F3F6FB;color:var(--primary)}
+.tree a code{font-family:Menlo,monospace;font-size:11px;color:var(--text-3)}
+footer{text-align:center;color:var(--text-3);font-size:12px;padding:48px 0 36px}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="wrap">
+    <div class="brand"><i><svg class="lucide" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg></i>社会实践基地资源库 · 原型导航</div>
+    <div class="anchors">
+      <a href="#roles">角色入口</a><a href="#modules">功能模块</a><a href="#matrix">权限矩阵</a>
+      <a href="#funcs">功能清单</a><a href="#flows">业务与审核流程</a><a href="#sitemap">页面地图</a>
+    </div>
+    <a class="btn-start" href="student/map.html"><i data-lucide="play"></i>开始演示</a>
+  </div>
+</nav>
+
+<!-- 头部主视觉 -->
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow"><i data-lucide="sparkles"></i>学工系统 · 第二课堂配套子系统 · 原型 V1.0</span>
+      <h1>社会实践基地资源库<br><em>让每一次实践都找到对的地方</em></h1>
+      <p class="lead">以「数字地图」整合学校签约实践基地，打通第二课堂社会实践数据，提供动态榜单、AI 智能匹配与管理决策洞察，服务学生、指导教师、院级与校级管理员四类角色。</p>
+      <div class="kpis">
+        <div><b class="num" id="kpiPages">41</b><span>原型页面</span></div>
+        <div><b class="num">4</b><span>系统角色</span></div>
+        <div><b class="num">14</b><span>功能模块</span></div>
+        <div><b class="num">4</b><span>核心业务流程</span></div>
+      </div>
+    </div>
+    <div class="route">
+      <h3><i data-lucide="route"></i>推荐演示路线（约 10 分钟）</h3>
+      <ol>
+        <li><a href="student/map.html">学生打开数字地图，按专题筛选基地<small>学生端</small></a></li>
+        <li><a href="student/ai-match.html">点击「为我推荐」，获取 AI 匹配结果<small>学生端</small></a></li>
+        <li><a href="student/base-detail.html">进入基地详情，发起第二课堂项目申报<small>学生端</small></a></li>
+        <li><a href="admin/case-pool.html?role=college">院级管理员推荐本院优秀案例<small>管理端</small></a></li>
+        <li><a href="admin/base-report-detail.html?role=school">校级管理员审核院级上报基地<small>管理端</small></a></li>
+        <li><a href="admin/ai-insight.html?role=school">查看数据看板与 AI 数据洞察预警<small>管理端</small></a></li>
+      </ol>
+    </div>
+  </div>
+</header>
+
+<!-- 01 角色入口 -->
+<section id="roles">
+  <div class="wrap">
+    <div class="sec-hd"><div><div class="no">01 / ROLES</div><h2>系统角色与演示入口</h2><p>管理端校级、院级共用一套页面，右上角可随时切换角色，直观对比权限差异</p></div></div>
+    <div class="roles" id="roleList"></div>
+  </div>
+</section>
+
+<!-- 02 功能模块 -->
+<section id="modules">
+  <div class="wrap">
+    <div class="sec-hd"><div><div class="no">02 / MODULES</div><h2>功能模块与页面预览</h2><p>每个模块展示实时页面缩略图，点击预览或下方页面标签即可跳转</p></div></div>
+    <div id="moduleList"></div>
+  </div>
+</section>
+
+<!-- 03 权限矩阵 -->
+<section id="matrix">
+  <div class="wrap">
+    <div class="sec-hd"><div><div class="no">03 / PERMISSION</div><h2>角色权限矩阵</h2><p>数据范围遵循「校级看全校、院级看本院、教师看本人指导、学生看本人」原则</p></div></div>
+    <div class="legend">
+      <span class="p p-a">全部权限</span><span class="p p-c">本院 / 限定范围</span><span class="p p-y">可使用</span><span class="p p-r">仅查看</span><span class="p p-n">— 无权限</span>
+    </div>
+    <div class="panel"><table class="matrix"><thead><tr><th>模块</th><th>功能点</th><th class="role-col">学生</th><th class="role-col">指导教师</th><th class="role-col">院级管理员</th><th class="role-col">校级管理员</th></tr></thead><tbody id="matrixBody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- 04 功能清单 -->
+<section id="funcs">
+  <div class="wrap">
+    <div class="sec-hd"><div><div class="no">04 / FEATURES</div><h2>功能清单</h2><p>按端口与模块梳理功能点、涉及角色及对应原型页面</p></div></div>
+    <div class="panel"><table class="func"><thead><tr><th style="width:70px">端口</th><th style="width:150px">功能模块</th><th>功能点</th><th style="width:170px">涉及角色</th><th style="width:170px">对应页面</th></tr></thead><tbody id="funcBody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- 05 业务与审核流程 -->
+<section id="flows">
+  <div class="wrap">
+    <div class="sec-hd"><div><div class="no">05 / FLOWS</div><h2>业务流程与审核流程</h2><p>院级上报基地须经校级审核后上线；优秀案例经院级推荐、校级终审后入库</p></div></div>
+    <div class="flows" id="flowList"></div>
+    <div class="group-t" style="--c:#0B1E4F">关键状态流转</div>
+    <div class="states">
+      <div class="state"><h4>院级上报基地状态</h4><div class="chain"><span>草稿</span><i data-lucide="arrow-right"></i><span>待审核</span><i data-lucide="arrow-right"></i><span style="background:#EAF7EE;color:#15803D">已上线</span><span style="background:#FDECEC;color:#B91C1C">已驳回</span></div><p>上线后可被校级下架；院级仅能编辑本院上报的基地，修改后重新进入审核。</p></div>
+      <div class="state"><h4>优秀案例状态</h4><div class="chain"><span>候选池</span><i data-lucide="arrow-right"></i><span>待终审</span><i data-lucide="arrow-right"></i><span style="background:#EAF7EE;color:#15803D">已入库</span><i data-lucide="arrow-right"></i><span>已下架</span></div><p>来源：系统自动抓取已结项评优项目 + 院级推荐；遴选、审核、下架全程留痕。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 页面地图 -->
+<section id="sitemap">
+  <div class="wrap">
+    <div class="sec-hd"><div><div class="no">06 / SITEMAP</div><h2>页面地图</h2><p>按角色与端口分文件夹存放，所有页面右下角均可一键返回本导航页</p></div></div>
+    <div class="sitemap" id="sitemapList"></div>
+  </div>
+</section>
+
+<footer>中南大学学生工作部（处） · 校团委　|　社会实践基地资源库产品原型 V1.0 · 2026 年 10 月</footer>
+
+<script>
+// ========== 角色 ==========
+const ROLES = [
+  { name: '学生', sub: '全日制在校学生', icon: 'user-round', c: '#2563EB', href: 'student/map.html',
+    items: ['数字地图浏览、专题筛选与搜索', 'AI 智能匹配实践基地与案例', '查看基地详情并发起第二课堂申报', '收藏基地 / 案例，接收消息同步'] },
+  { name: '指导教师', sub: '社会实践项目指导老师', icon: 'presentation', c: '#0D9488', href: 'teacher/home.html',
+    items: ['浏览地图、基地、榜单与案例', '查看本人指导项目的地图分布', '查看指导项目进度（立项、实践、结项）', '无编辑、配置及全校导出权限'] },
+  { name: '院级管理员', sub: '各学院团委 / 学工办', icon: 'building-2', c: '#7C3AED', href: 'admin/dashboard.html?role=college',
+    items: ['可查看数字地图', '上报本院基地，仅可编辑本院基地', '跟踪本院基地上报与审核进度', '推荐本院优质项目进入案例库', '查看与导出本院数据，接收 AI 预警'] },
+  { name: '校级管理员', sub: '校团委 / 学生工作部', icon: 'shield-check', c: '#C8102E', href: 'admin/dashboard.html?role=school',
+    items: ['可查看数字地图', '全部基地增删改、下架与上报审核', '标签库、榜单、AI 参数全局配置', '案例终审入库与下架', '全校看板、AI 洞察、预警推送'] }
+];
+
+// ========== 功能模块（端口 / 预览页 / 包含页面 / 功能点 / 角色） ==========
+const ENDS = { student: { name: '学生端', c: '#2563EB', dir: 'student/' }, admin: { name: '管理端', c: '#C8102E', dir: 'admin/' }, teacher: { name: '教师端', c: '#0D9488', dir: 'teacher/' } };
+const MODULES = [
+  { end: 'student', title: '数字地图大屏', icon: 'map', preview: 'map.html', roles: '学生、教师、管理员',
+    desc: '全国签约基地点位地图，20 类专题图例筛选，数据面板与优秀案例滚动榜，点击点位弹出基地详情。',
+    feats: ['全国电子地图渲染基地点位，支持缩放、平移', '20 类专题标签多选筛选、关键词搜索自动定位', '点位详情弹窗：共建单位、容量、联系人、实践方向', '入口：为我推荐实践资源'],
+    pages: [['数字地图首页', 'map.html']] },
+  { end: 'student', title: '基地检索与详情', icon: 'search', preview: 'base-list.html', roles: '学生、教师',
+    desc: '多条件组合筛选基地，详情页集中展示基地信息、配套资源下载与历史实践项目（脱敏）。',
+    feats: ['专题、级别、省市、接待人数筛选', '基地详情：简介、实景图、实践方向、接待容量', '配套资源：实践指南、安全手册、申报模板在线预览 / 下载', '历史实践项目脱敏展示、同基地优秀案例'],
+    pages: [['基地检索', 'base-list.html'], ['基地详情', 'base-detail.html'], ['资源在线预览', 'resource-preview.html']] },
+  { end: 'student', title: '动态资源榜单', icon: 'trophy', preview: 'ranking.html', roles: '学生、教师、管理员',
+    desc: '活跃基地榜与优秀案例榜实时从第二课堂数据库计算刷新，支持按学年、主题、学院筛选。',
+    feats: ['活跃基地榜：按项目数、人次、实践时长综合排名', '优秀案例榜：已结项评优项目 + 管理员遴选', '按学年 / 实践主题 / 学院筛选，分页浏览', '案例详情可跳转完整项目档案'],
+    pages: [['活跃基地榜', 'ranking.html'], ['优秀案例榜', 'cases.html'], ['案例详情', 'case-detail.html']] },
+  { end: 'student', title: 'AI 智能匹配推荐', icon: 'sparkles', preview: 'ai-match.html', roles: '学生',
+    desc: '基于学院专业、意向地点、主题标签与行为数据，推荐适配基地与同主题案例，附匹配理由。',
+    feats: ['入口：地图首页按钮 + 申报草稿页自动弹出卡片', '推荐基地附匹配理由，一键定位地图', '推荐案例：查看案例、复制申报模板', '重新匹配、不感兴趣反馈用于模型迭代'],
+    pages: [['AI 匹配推荐', 'ai-match.html'], ['申报草稿（AI 卡片）', 'project-draft.html']] },
+  { end: 'student', title: '个人中心与消息', icon: 'user-round', preview: 'profile.html', roles: '学生',
+    desc: '个人实践档案、我的收藏（基地 / 案例）统一查看，消息与第二课堂阅办同步。',
+    feats: ['个人实践概览：收藏、参与项目、实践时长', '我的收藏：基地、优秀案例分开管理', '消息中心：资源更新与系统通知', '跳转第二课堂：项目申报、我的项目'],
+    pages: [['个人中心', 'profile.html'], ['收藏·基地', 'favorites.html'], ['收藏·案例', 'favorites-cases.html'], ['消息中心', 'messages.html']] },
+
+  { end: 'admin', title: '管理工作台', icon: 'layout-dashboard', preview: 'dashboard.html', roles: '院级、校级',
+    desc: '待办聚合（上报审核、案例遴选）、AI 资源预警醒目展示、核心指标与快捷入口。',
+    feats: ['待办事项聚合与快捷处理', 'AI 资源紧缺预警横幅', '核心指标卡与近期动态', '院级仅显示本院待办与数据'],
+    pages: [['工作台', 'dashboard.html']] },
+  { end: 'admin', title: '基地管理与上报审核', icon: 'map-pinned', preview: 'bases.html', roles: '院级、校级',
+    desc: '校级维护全部基地；院级上报本院新增基地、仅可编辑本院基地；上报须校级审核后上线。',
+    feats: ['基地新增、编辑、下架（校级全部 / 院级本院）', '维护标签、图片、容量、联系人、配套文档', '院级上报 → 校级审核 → 上线地图', '基地编辑操作日志留痕'],
+    pages: [['基地管理', 'bases.html'], ['新增 / 编辑基地', 'base-edit.html'], ['上报审核列表', 'base-reports.html'], ['上报审核详情', 'base-report-detail.html']] },
+  { end: 'admin', title: '标签库与榜单配置', icon: 'tags', preview: 'tags.html', roles: '校级',
+    desc: '维护 20 类专题标签（地图筛选、AI 匹配依据）；配置活跃基地榜统计周期、权重、置顶与隐藏。',
+    feats: ['标签新增、修改、停用，给基地 / 案例打标签', '榜单统计周期：学年 / 学期', '计算权重：项目数、人次、实践时长', '手动置顶、隐藏条目'],
+    pages: [['专题标签库', 'tags.html'], ['活跃基地榜配置', 'ranking-config.html']] },
+  { end: 'admin', title: '优秀案例库', icon: 'award', preview: 'case-library.html', roles: '院级、校级',
+    desc: '系统自动抓取已结项评优项目进入候选池，院级推荐、校级终审入库，可编辑摘要封面与下架。',
+    feats: ['候选池：自动抓取 + 院级推荐本院项目', '校级终审：编辑摘要、封面、标签', '已入库案例下架管理', '遴选、审核、下架日志完整留存'],
+    pages: [['案例候选池', 'case-pool.html'], ['优秀案例库', 'case-library.html'], ['案例终审', 'case-review.html']] },
+  { end: 'admin', title: '数据可视化看板', icon: 'bar-chart-3', preview: 'data-board.html', roles: '院级、校级',
+    desc: '6 项核心指标，基地 / 学院 / 案例 / 时间四个维度图表；院级仅可查看与导出本院数据。',
+    feats: ['筛选学年、学期、学院', '基地人次分布、结项完成率、主题分布', '学院参与率、实践时长、案例产出', '按月人次与立项趋势，导出 Excel'],
+    pages: [['数据看板', 'data-board.html']] },
+  { end: 'admin', title: 'AI 智能中心', icon: 'sparkles', preview: 'ai-insight.html', roles: '校级',
+    desc: 'AI 匹配因子权重、效果数据与黑名单配置；资源热度预测预警、主题需求洞察与报告导出。',
+    feats: ['专业 / 地理位置 / 主题标签权重调整', '推荐点击率等效果数据', '基地 / 案例推荐黑名单', '热度预测预警、一键推送院级、导出 PDF / Excel'],
+    pages: [['因子权重', 'ai-weights.html'], ['效果数据', 'ai-effect.html'], ['推荐黑名单', 'ai-blacklist.html'], ['AI 数据洞察', 'ai-insight.html']] },
+  { end: 'admin', title: '操作日志与第二课堂联动', icon: 'scroll-text', preview: 'operation-logs.html', roles: '院级、校级',
+    desc: '基地编辑、案例遴选、AI 参数修改、上报审核全量留痕（不可删除）；一键跳转第二课堂业务页面。',
+    feats: ['记录操作人、时间、修改前后内容', '日志不可删除，支持筛选导出', '跳转项目审核、结项审核、学分认定、评优、诚信管理', '数据来源第二课堂，不重复录入'],
+    pages: [['操作日志', 'operation-logs.html'], ['第二课堂联动', 'second-classroom.html']] },
+
+  { end: 'teacher', title: '教师工作台与指导项目', icon: 'presentation', preview: 'home.html', roles: '指导教师',
+    desc: '查看本人指导项目概览、项目地图分布与项目进度（立项、实践中、待结项、已结项）。',
+    feats: ['指导项目概览与进度', '指导项目实践地点地图分布', '项目阶段：立项、实践中、待结项、已结项', '无编辑、配置与全校导出权限'],
+    pages: [['教师工作台', 'home.html'], ['我指导的项目', 'guided-projects.html']] },
+  { end: 'teacher', title: '资源只读浏览', icon: 'eye', preview: 'bases.html', roles: '指导教师',
+    desc: '只读浏览数字地图、实践基地、活跃基地榜与优秀案例，便于为学生团队提供选点建议。',
+    feats: ['数字地图（复用学生端大屏）', '基地库只读浏览', '榜单与优秀案例只读浏览', '页面无任何编辑入口'],
+    pages: [['实践基地（只读）', 'bases.html'], ['榜单与案例（只读）', 'cases.html'], ['数字地图', '../student/map.html']] }
+];
+
+// ========== 权限矩阵：a=全部 c=限定范围 y=可使用 r=仅查看 n=无 ==========
+const MATRIX = [
+  ['数字地图', '地图浏览、专题筛选、搜索定位', 'y', 'y', 'y', 'y'],
+  ['数字地图', '基地详情与配套资源下载', 'y', 'y', 'y', 'y'],
+  ['动态榜单', '活跃基地榜、优秀案例榜查看', 'y', 'y', 'y', 'y'],
+  ['AI 匹配', '个性化推荐、重新匹配、不感兴趣反馈', 'y', 'n', 'n', 'n'],
+  ['个人中心', '收藏基地与案例', 'y', 'n', 'n', 'n'],
+  ['基地管理', '查看全部基地', 'r', 'r', 'r', 'a'],
+  ['基地管理', '新增、编辑、下架基地', 'n', 'n', 'c|上报 + 编辑本院', 'a'],
+  ['基地管理', '院级上报基地审核', 'n', 'n', 'c|发起上报', 'a|审核上线'],
+  ['资源配置', '专题标签库维护', 'n', 'n', 'n', 'a'],
+  ['资源配置', '活跃基地榜周期、权重、置顶隐藏', 'n', 'n', 'n', 'a'],
+  ['优秀案例', '推荐项目进入候选池', 'n', 'n', 'c|本院项目', 'a'],
+  ['优秀案例', '终审入库、编辑摘要封面、下架', 'n', 'n', 'n', 'a'],
+  ['数据看板', '查看可视化看板', 'n', 'c|指导项目', 'c|本院', 'a|全校'],
+  ['数据看板', '导出 Excel 报表', 'n', 'n', 'c|本院', 'a|全校'],
+  ['AI 配置', '因子权重、效果数据、推荐黑名单', 'n', 'n', 'n', 'a'],
+  ['AI 洞察', '热度预测、需求洞察、报告导出', 'n', 'n', 'n', 'a'],
+  ['AI 洞察', '资源紧缺预警', 'n', 'n', 'r|接收推送', 'a|查看并推送'],
+  ['系统', '操作日志查看（不可删除）', 'n', 'n', 'c|本院', 'a'],
+  ['第二课堂', '页面跳转联动', 'y|申报、我的项目', 'r|查看', 'y|审核类页面', 'y|全部页面']
+];
+const P_TEXT = { a: '全部权限', c: '本院', y: '可使用', r: '仅查看', n: '—' };
+
+// ========== 业务与审核流程（who 泳道角色，t=dec 判断节点 / end 结束节点，br 分支说明） ==========
+const LANE = { 学生: '#2563EB', 系统: '#64748B', 审批人: '#D97706', 院级管理员: '#7C3AED', 校级管理员: '#C8102E', 第二课堂: '#0D9488', 管理员: '#D97706' };
+const FLOWS = [
+  { title: '院级基地上报审核流程', steps: [
+    { who: '院级管理员', what: '填写本院新增基地：标签、容量、联系人、文档' },
+    { who: '院级管理员', what: '提交上报，状态变为「待审核」' },
+    { who: '校级管理员', what: '审核基地资质与信息完整性', t: 'dec', br: '驳回 → 退回院级修改后重新上报' },
+    { who: '系统', what: '审核通过：基地上线地图，参与筛选与 AI 匹配' },
+    { who: '系统', what: '上报、审核、编辑全过程日志留痕', t: 'end' }
+  ]},
+  { title: '优秀案例遴选入库流程', steps: [
+    { who: '系统', what: '自动抓取第二课堂已结项、已评优项目进入候选池' },
+    { who: '院级管理员', what: '推荐本院优质项目进入候选池' },
+    { who: '校级管理员', what: '终审：编辑摘要、封面与专题标签', t: 'dec', br: '不通过 → 保留在候选池' },
+    { who: '系统', what: '入库展示：案例榜、基地详情、AI 推荐' },
+    { who: '校级管理员', what: '按需下架，遴选 / 审核 / 下架日志留存', t: 'end' }
+  ]},
+  { title: 'AI 资源预警推送流程', steps: [
+    { who: '系统', what: '汇总第二课堂申报与浏览行为数据' },
+    { who: '系统', what: '预测下学期各基地实践热度' },
+    { who: '系统', what: '预测实践人次是否超过接待上限', t: 'dec', br: '未超限 → 持续监测' },
+    { who: '系统', what: '生成预警与建设建议（拓展同类基地 / 提升容量）' },
+    { who: '校级管理员', what: '查看预警，一键推送对应院级管理员' },
+    { who: '院级管理员', what: '工作台醒目展示，跟进资源建设', t: 'end' }
+  ]},
+  { title: '第二课堂数据联动流程', steps: [
+    { who: '第二课堂', what: '项目申报、立项、结项、评优、学分数据' },
+    { who: '系统', what: '资源库读取数据，不重复录入，计算榜单 / 看板 / AI' },
+    { who: '学生', what: '从地图、基地、案例跳转项目申报与我的项目' },
+    { who: '管理员', what: '后台跳转项目审核、结项审核、学分认定、评优、诚信管理' },
+    { who: '系统', what: '资源更新、立项进度同步阅办消息', t: 'end' }
+  ]}
+];
+
+// ========== 渲染 ==========
+const $ = id => document.getElementById(id);
+const href = (m, p) => ENDS[m.end].dir + p;
+
+$('roleList').innerHTML = ROLES.map(r => `
+  <div class="role" style="--c:${r.c}">
+    <div class="ic"><i data-lucide="${r.icon}"></i></div>
+    <h3>${r.name}</h3><div class="sub">${r.sub}</div>
+    <ul>${r.items.map(t => `<li><i data-lucide="check"></i>${t}</li>`).join('')}</ul>
+    <a class="go" href="${r.href}">以${r.name}身份进入<i data-lucide="arrow-right"></i></a>
+  </div>`).join('');
+
+$('moduleList').innerHTML = Object.keys(ENDS).map(end => {
+  const e = ENDS[end], list = MODULES.filter(m => m.end === end);
+  return `<div class="group-t" style="--c:${e.c}"><span>${e.name}</span>${list.length} 个模块<small>文件夹 ${e.dir}</small></div>
+  <div class="modules">${list.map(m => `
+    <div class="mod">
+      <a class="preview" href="${href(m, m.preview)}"><iframe loading="lazy" src="${href(m, m.preview)}" tabindex="-1" title="${m.title}预览"></iframe><div class="mask"><span><i data-lucide="maximize-2"></i>打开页面</span></div></a>
+      <div class="mod-bd">
+        <h3><i data-lucide="${m.icon}"></i>${m.title}</h3>
+        <p>${m.desc}</p>
+        <div class="links">${m.pages.map(p => `<a href="${href(m, p[1])}">${p[0]}<code>${p[1].replace('../student/', '')}</code></a>`).join('')}</div>
+      </div>
+    </div>`).join('')}</div>`;
+}).join('');
+
+$('matrixBody').innerHTML = MATRIX.map((r, i) => {
+  const showM = i === 0 || MATRIX[i - 1][0] !== r[0];
+  const cells = r.slice(2).map(v => { const [k, t] = v.split('|'); return `<td class="cell"><span class="p p-${k}">${t || P_TEXT[k]}</span></td>`; }).join('');
+  return `<tr><td class="m">${showM ? r[0] : ''}</td><td class="f">${r[1]}</td>${cells}</tr>`;
+}).join('');
+
+$('funcBody').innerHTML = MODULES.map(m => `<tr>
+  <td><span class="ends" style="background:${ENDS[m.end].c}">${ENDS[m.end].name}</span></td>
+  <td><b>${m.title}</b></td>
+  <td><ul>${m.feats.map(f => `<li>${f}</li>`).join('')}</ul></td>
+  <td>${m.roles}</td>
+  <td>${m.pages.map(p => `<a href="${href(m, p[1])}">${p[0]}</a>`).join('')}</td></tr>`).join('');
+
+$('flowList').innerHTML = FLOWS.map((f, i) => {
+  const lanes = [...new Set(f.steps.map(s => s.who))];
+  return `<div class="flow">
+    <div class="flow-hd"><h3><b>${i + 1}</b>${f.title}</h3><div class="lanes">${lanes.map(l => `<span><i style="--c:${LANE[l]}"></i>${l}</span>`).join('')}</div></div>
+    <div class="steps">${f.steps.map((s, j) => `
+      <div class="step"><div class="node ${s.t || ''}" style="--c:${LANE[s.who]}">
+        <span class="who">${s.who}</span><div class="what">${s.what}</div>
+        ${s.br ? `<div class="br"><i data-lucide="corner-down-right"></i>${s.br}</div>` : ''}
+      </div>${j < f.steps.length - 1 ? '<div class="arrow"><i data-lucide="chevron-right"></i></div>' : ''}</div>`).join('')}
+    </div></div>`;
+}).join('');
+
+// 页面地图：按端口汇总全部页面
+const tree = { student: [], admin: [], teacher: [] };
+MODULES.forEach(m => m.pages.forEach(p => { if (!p[1].startsWith('../')) tree[m.end].push(p); }));
+const adminSplit = Math.ceil(tree.admin.length / 2);
+const cols = [
+  ['学生端', 'student/', tree.student, '#2563EB'],
+  ['管理端（一）', 'admin/', tree.admin.slice(0, adminSplit), '#C8102E'],
+  ['管理端（二）', 'admin/', tree.admin.slice(adminSplit), '#C8102E'],
+  ['教师端 · 导航页', 'teacher/', tree.teacher, '#0D9488']
+];
+$('sitemapList').innerHTML = cols.map(([t, dir, list, c], i) => `<div class="tree">
+  <h4><i data-lucide="folder" style="color:${c}"></i>${t}<code>/${dir}</code></h4>
+  ${i === 3 ? '<a href="index.html">原型导航页<code>index.html</code></a>' : ''}
+  ${list.map(p => `<a href="${dir + p[1]}">${p[0]}<code>${p[1]}</code></a>`).join('')}</div>`).join('');
+$('kpiPages').textContent = tree.student.length + tree.admin.length + tree.teacher.length + 1;
+
+// 预览 iframe 按卡片宽度等比缩放
+function scalePreviews(){ document.querySelectorAll('.preview').forEach(p => { p.querySelector('iframe').style.transform = `scale(${p.clientWidth / 1440})`; }); }
+window.addEventListener('resize', scalePreviews);
+scalePreviews();
+refreshIcons();
+</script>
+</body>
+</html>

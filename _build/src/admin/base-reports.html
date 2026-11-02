@@ -1,0 +1,49 @@
+---
+title: 基地上报审核
+layout: admin
+menu: base-reports
+crumb: 社会实践基地资源库 / 基地管理 / 基地上报审核
+---
+<div class="page-hd">
+  <div><h1 data-only="school">院级基地上报审核</h1><h1 data-only="college">我的基地上报</h1>
+    <p>流程：院级管理员上报 → 校级管理员审核 → 通过后上线数字地图并参与 AI 匹配；驳回可修改后重新上报</p></div>
+  <div class="actions" data-only="college"><a class="btn btn-primary" href="base-edit.html"><i data-lucide="upload"></i>上报新基地</a></div>
+</div>
+
+<div class="stats mb-16" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stat"><span class="ic" style="background:#FEF4E4;color:#D97706"><i data-lucide="hourglass"></i></span><div><div class="v num" data-only="school">5</div><div class="v num" data-only="college">2</div><div class="l">待审核</div></div></div>
+  <div class="stat"><span class="ic" style="background:#EAF7EE;color:#16A34A"><i data-lucide="badge-check"></i></span><div><div class="v num" data-only="school">42</div><div class="v num" data-only="college">16</div><div class="l">本学年已通过</div></div></div>
+  <div class="stat"><span class="ic" style="background:#FDECEC;color:#DC2626"><i data-lucide="undo-2"></i></span><div><div class="v num" data-only="school">6</div><div class="v num" data-only="college">1</div><div class="l">已驳回</div></div></div>
+  <div class="stat"><span class="ic"><i data-lucide="timer"></i></span><div><div class="v num">1.8<small>天</small></div><div class="l">平均审核时长</div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-hd">
+    <div class="chips" data-chips="single"><span class="chip on">全部</span><span class="chip">待审核</span><span class="chip">已通过</span><span class="chip">已驳回</span></div>
+    <div class="filter-bar"><select class="select" data-only="school"><option>全部学院</option><option>计算机学院</option><option>机械工程学院</option><option>医学院</option></select>
+      <div class="input-ic" style="width:220px"><i data-lucide="search"></i><input class="input" placeholder="搜索基地名称"></div></div>
+  </div>
+
+  <!-- 校级：审核全部学院上报 -->
+  <table class="table" data-only="school">
+    <thead><tr><th>上报基地</th><th>上报学院</th><th>上报人</th><th>专题标签</th><th>上报类型</th><th>提交时间</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>
+      <tr><td><b>长沙人工智能创新中心</b></td><td>计算机学院</td><td>李敏</td><td><span class="tag tag-c" style="--c:#0891B2">攀高攻坚</span></td><td><span class="tag tag-blue">新增</span></td><td class="num muted">2026-10-26 16:20</td><td><span class="status s-pending">待审核</span></td><td><a class="btn btn-sm btn-primary" href="base-report-detail.html">审核</a></td></tr>
+      <tr><td><b>湘江新区社区卫生服务站</b></td><td>医学院</td><td>周婧</td><td><span class="tag tag-c" style="--c:#14B8A6">健康中国</span></td><td><span class="tag tag-blue">新增</span></td><td class="num muted">2026-10-25 10:05</td><td><span class="status s-pending">待审核</span></td><td><a class="btn btn-sm btn-primary" href="base-report-detail.html">审核</a></td></tr>
+      <tr><td><b>三一重工“灯塔工厂”</b></td><td>机械工程学院</td><td>周涛</td><td><span class="tag tag-c" style="--c:#2563EB">大国重器</span></td><td><span class="tag tag-orange">信息变更</span></td><td class="num muted">2026-10-25 09:18</td><td><span class="status s-pending">待审核</span></td><td><a class="btn btn-sm btn-primary" href="base-report-detail.html">审核</a></td></tr>
+      <tr><td><b>岳麓区青少年法治教育基地</b></td><td>法学院</td><td>韩雪</td><td><span class="tag tag-c" style="--c:#7C3AED">普法与法治建设</span></td><td><span class="tag tag-blue">新增</span></td><td class="num muted">2026-10-20 14:40</td><td><span class="status s-pass">已通过</span></td><td><a class="btn-text" href="base-report-detail.html">查看</a></td></tr>
+      <tr><td><b>某科技公司研发中心</b></td><td>计算机学院</td><td>李敏</td><td><span class="tag tag-c" style="--c:#0EA5E9">行业认知</span></td><td><span class="tag tag-blue">新增</span></td><td class="num muted">2026-10-12 11:22</td><td><span class="status s-reject">已驳回</span></td><td><a class="btn-text" href="base-report-detail.html">查看</a></td></tr>
+    </tbody>
+  </table>
+
+  <!-- 院级：查看本院上报记录 -->
+  <table class="table" data-only="college">
+    <thead><tr><th>上报基地</th><th>专题标签</th><th>上报类型</th><th>提交时间</th><th>审核人</th><th>状态</th><th>审核意见</th><th>操作</th></tr></thead>
+    <tbody>
+      <tr><td><b>长沙人工智能创新中心</b></td><td><span class="tag tag-c" style="--c:#0891B2">攀高攻坚</span></td><td><span class="tag tag-blue">新增</span></td><td class="num muted">2026-10-26 16:20</td><td>—</td><td><span class="status s-pending">待审核</span></td><td class="muted">—</td><td><div class="ops"><a class="btn-text" href="base-report-detail.html">查看</a><a class="btn-text danger" onclick="toast('已撤回上报')">撤回</a></div></td></tr>
+      <tr><td><b>国家超级计算长沙中心</b></td><td><span class="tag tag-c" style="--c:#0891B2">攀高攻坚</span></td><td><span class="tag tag-orange">信息变更</span></td><td class="num muted">2026-10-24 09:30</td><td>—</td><td><span class="status s-pending">待审核</span></td><td class="muted">接待容量 30 → 40</td><td><a class="btn-text" href="base-report-detail.html">查看</a></td></tr>
+      <tr><td><b>华为松山湖研发基地</b></td><td><span class="tag tag-c" style="--c:#0EA5E9">行业认知</span></td><td><span class="tag tag-blue">新增</span></td><td class="num muted">2026-09-18 15:00</td><td>王建国</td><td><span class="status s-pass">已通过</span></td><td class="muted">资料齐全，同意上线</td><td><a class="btn-text" href="base-report-detail.html">查看</a></td></tr>
+      <tr><td><b>某科技公司研发中心</b></td><td><span class="tag tag-c" style="--c:#0EA5E9">行业认知</span></td><td><span class="tag tag-blue">新增</span></td><td class="num muted">2026-10-12 11:22</td><td>王建国</td><td><span class="status s-reject">已驳回</span></td><td class="c-danger small">缺少共建协议，请补充后重新上报</td><td><a class="btn-text" href="base-edit.html">修改重报</a></td></tr>
+    </tbody>
+  </table>
+</div>

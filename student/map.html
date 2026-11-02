@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数字地图 - 社会实践基地资源库（学生端）</title>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/china.js"></script>
+<script>
+// 公共脚本：图标渲染、轻提示、弹窗、筛选标签切换
+function refreshIcons(){ window.lucide && lucide.createIcons(); }
+function toast(msg, icon){
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = '<i data-lucide="' + (icon || 'check-circle-2') + '"></i>' + msg;
+  document.body.appendChild(t); refreshIcons();
+  requestAnimationFrame(function(){ t.classList.add('show'); });
+  setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); }, 300); }, 2000);
+}
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+document.addEventListener('click', function(e){
+  var chip = e.target.closest('[data-chips] .chip');
+  if (chip) {
+    var group = chip.parentElement;
+    if (group.dataset.chips === 'single') group.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+    chip.classList.toggle('on');
+  }
+  if (e.target.classList.contains('modal-mask')) e.target.classList.remove('show');
+});
+document.addEventListener('DOMContentLoaded', refreshIcons);
+</script>
+<script>
+const IMG_IDS={greatwall:"1508804185872-d7badad00f7d",greatwall2:"1547150492-da7ff1742941",palace:"1547981609-4b6bfe67ca0b",gate:"1529921879218-f99546d03a9d",shanghai:"1474181487882-5abf3f0ba6c2",citynight:"1536599018102-9f803c140fc1",field:"1500382017468-9049fed747ef",veg:"1464226184884-fa280b87c399",terrace:"1537531383496-f4749b8032cf",valley:"1469474968028-56623f02e42e",mountain:"1506905925346-21bda4d32df4",mountain2:"1470071459604-3b5ec3a7fe05",river:"1527489377706-5bf97e608852",forestair:"1497436072909-60f360e1d4b1",forest:"1441974231531-c6227db76b6e",solar:"1509391366360-2e959784a276",wind:"1466611653911-95081537e5b7",power:"1473341304170-971dccb5ac1e",earth:"1446776811953-b23d57bd21aa",rocket:"1516849841032-87cbac4d88f7",factory:"1581091226825-a6a2a5aee158",engineer:"1581092160562-40aa08e78837",lab:"1532094349884-543bc11b234d",doctor:"1576091160399-112ba8d25d1d",justice:"1589829545856-d10d557cf95f",volunteer:"1559027615-cd4628902d4a",kids:"1488521787991-ed7bbaae773c",classroom:"1577896851231-70ef18881754",lecture:"1524178232363-1fb2b075b655",library:"1427504494785-3a9ca7044f45",students:"1522202176988-66273c2fd55f",students2:"1531545514256-b1400bc00f31",team:"1523240795612-9a054b0db644",youth:"1529156069898-49953e39b3ac",hands:"1582213782179-e0d53f98f2ca",plant:"1542601906990-b4d3fb778b09",campus:"1562774053-701939374585",graduation:"1541339907198-e08756dedf3f",meeting:"1517048676732-d65bc937f952",dumpling:"1563245372-f21724e3856d",data:"1551288049-bebda4e38f71",building:"1486406146926-c627a92ad1ab"};
+// ========== 模拟数据：专题标签 / 学院 / 实践基地 / 优秀案例 ==========
+function img(key, w, h){
+  return 'https://images.unsplash.com/photo-' + IMG_IDS[key] + '?auto=format&fit=crop&q=80&w=' + (w || 800) + (h ? '&h=' + h : '');
+}
+
+// 20 类专题标签（名称、色值），地图图例、筛选、标签库统一使用
+const CATS = [
+  { name: '五史教育', color: '#E11D48' },
+  { name: '国家安全教育', color: '#B91C1C' },
+  { name: '大中小学思政一体化', color: '#8B5CF6' },
+  { name: '铸牢中华民族共同体意识', color: '#C2410C' },
+  { name: '中华优秀传统文化', color: '#D97706' },
+  { name: '革命文化', color: '#EF4444' },
+  { name: '社会主义先进文化', color: '#F43F5E' },
+  { name: '脱贫攻坚乡村振兴', color: '#16A34A' },
+  { name: '绿色发展', color: '#10B981' },
+  { name: '攀高攻坚', color: '#0891B2' },
+  { name: '大国重器', color: '#2563EB' },
+  { name: '弘扬科学家精神', color: '#6366F1' },
+  { name: '工业文化', color: '#64748B' },
+  { name: '健康中国', color: '#14B8A6' },
+  { name: '行业认知', color: '#0EA5E9' },
+  { name: '普法与法治建设', color: '#7C3AED' },
+  { name: '基层治理', color: '#CA8A04' },
+  { name: '社区服务', color: '#F97316' },
+  { name: '廉政教育', color: '#BE123C' },
+  { name: '爱国主义教育', color: '#DC2626' }
+];
+
+const COLLEGES = ['计算机学院', '机械工程学院', '马克思主义学院', '经济管理学院', '法学院', '医学院', '公共管理学院', '文学院', '环境学院', '外国语学院'];
+
+// 牵头单位：实践基地表单接口为 xjXyxxFindAll（学院表，源码无静态名单）。
+// 此处用上面的 COLLEGES，并加上校级单位「校团委」（活动主办单位固定机构注释写明校团委；现有原型归属单位里也有这一项）。
+const LEAD_UNITS = COLLEGES.concat(['校团委']);
+
+// 基地类型：实践申报配置「基地类型」锁定子项
+// znzhxgpt-yw/src/views/dext/sjsbpz/components/AddEditDialog.vue  JDLX_ZX_NAMES
+const BASE_TYPES = [
+  '校企培优实践基地',
+  '社区实践基地',
+  '企业名师实践育人工作室',
+  '驻校青年驿站',
+  '校地/区校共建实践基地',
+  '大中小学思想政治教育一体化建设基地'
+];
+
+// 实践主题：实践申报配置「基地实践主题」锁定子项
+// znzhxgpt-yw/src/views/dext/sjsbpz/components/AddEditDialog.vue  JDSJZT_ZX_NAMES
+const PRACTICE_THEMES = [
+  '五史教育',
+  '国家安全教育',
+  '大中小学思想政治教育一体化建设',
+  '铸牢中华民族共同体意识',
+  '中华优秀传统文化',
+  '革命文化',
+  '社会主义先进文化',
+  '脱贫攻坚乡村振兴',
+  '绿色发展',
+  '攀高攻坚',
+  '大国重器',
+  '工业文化',
+  '健康中国',
+  '行业认知',
+  '普法与法治建设',
+  '基层治理',
+  '社区服务',
+  '廉政教育',
+  '爱国主义教育',
+  '弘扬科学家精神'
+];
+
+// 授牌情况：sjjdgl/components/AddEditDialog.vue 写死的 el-option
+const AWARD_OPTIONS = ['授牌并签订协议', '仅授牌', '仅签订协议', '未授牌且无协议'];
+
+// 基地状态：同文件 el-option，value 1/0
+const BASE_RUN_STATUS = ['正常', '停用'];
+
+// 单位类型：字典编码 dekt_dwlx，源码只有编码、没有条目。
+// 下列三项是实践基地列表截图里出现过的示例，不是完整字典。
+const UNIT_TYPES = ['基层群众性自治组织', '企业单位', '社会组织'];
+
+// 实践基地：c=专题标签下标，lv=级别，col=上报学院（院级基地），cap=单批接待人数
+const BASES = [
+  { id: 1, name: '韶山毛泽东同志纪念馆', c: 5, lv: '校级', prov: '湖南', city: '湘潭', lng: 112.53, lat: 27.92, cap: 60, img: 'mountain2', unit: '韶山毛泽东同志纪念馆', persons: 1260 },
+  { id: 2, name: '岳麓山·橘子洲旅游区', c: 4, lv: '校级', prov: '湖南', city: '长沙', lng: 112.95, lat: 28.18, cap: 80, img: 'mountain', unit: '岳麓山风景名胜区管理局', persons: 980 },
+  { id: 3, name: '十八洞村乡村振兴示范点', c: 7, lv: '校级', prov: '湖南', city: '湘西', lng: 109.48, lat: 28.42, cap: 40, img: 'terrace', unit: '花垣县双龙镇十八洞村村委会', persons: 860 },
+  { id: 4, name: '航天科技集团总装测试基地', c: 10, lv: '校级', prov: '北京', city: '北京', lng: 116.30, lat: 39.80, cap: 30, img: 'rocket', unit: '中国航天科技集团某研究院', persons: 420 },
+  { id: 5, name: '中联重科智能制造产业园', c: 12, lv: '院级', col: '机械工程学院', prov: '湖南', city: '长沙', lng: 113.00, lat: 28.10, cap: 50, img: 'factory', unit: '中联重科股份有限公司', persons: 610 },
+  { id: 6, name: '三一重工“灯塔工厂”', c: 10, lv: '院级', col: '机械工程学院', prov: '湖南', city: '长沙', lng: 113.08, lat: 28.24, cap: 40, img: 'engineer', unit: '三一重工股份有限公司', persons: 540 },
+  { id: 7, name: '井冈山革命烈士陵园', c: 5, lv: '校级', prov: '江西', city: '吉安', lng: 114.17, lat: 26.57, cap: 100, img: 'mountain', unit: '井冈山革命博物馆', persons: 1120 },
+  { id: 8, name: '延安革命纪念馆', c: 0, lv: '校级', prov: '陕西', city: '延安', lng: 109.49, lat: 36.60, cap: 80, img: 'valley', unit: '延安革命纪念馆', persons: 760 },
+  { id: 9, name: '嘉兴南湖革命纪念馆', c: 0, lv: '校级', prov: '浙江', city: '嘉兴', lng: 120.75, lat: 30.75, cap: 80, img: 'river', unit: '南湖革命纪念馆', persons: 690 },
+  { id: 10, name: '安吉余村“两山”实践基地', c: 8, lv: '校级', prov: '浙江', city: '湖州', lng: 119.60, lat: 30.60, cap: 60, img: 'forestair', unit: '安吉县天荒坪镇余村', persons: 720 },
+  { id: 11, name: '塞罕坝机械林场', c: 8, lv: '校级', prov: '河北', city: '承德', lng: 117.30, lat: 42.40, cap: 40, img: 'forest', unit: '河北省塞罕坝机械林场', persons: 380 },
+  { id: 12, name: '袁隆平杂交水稻研究中心', c: 11, lv: '校级', prov: '湖南', city: '长沙', lng: 113.07, lat: 28.20, cap: 40, img: 'field', unit: '湖南杂交水稻研究中心', persons: 880 },
+  { id: 13, name: '国家超级计算长沙中心', c: 9, lv: '院级', col: '计算机学院', prov: '湖南', city: '长沙', lng: 112.94, lat: 28.17, cap: 30, img: 'data', unit: '国家超级计算长沙中心', persons: 460 },
+  { id: 14, name: '湘西州民族团结进步教育基地', c: 3, lv: '院级', col: '马克思主义学院', prov: '湖南', city: '湘西', lng: 109.73, lat: 28.31, cap: 50, img: 'hands', unit: '湘西州民族宗教事务委员会', persons: 350 },
+  { id: 15, name: '湖南省国家安全教育馆', c: 1, lv: '校级', prov: '湖南', city: '长沙', lng: 112.98, lat: 28.20, cap: 60, img: 'building', unit: '湖南省国家安全教育馆', persons: 520 },
+  { id: 16, name: '湘雅社区健康服务中心', c: 13, lv: '院级', col: '医学院', prov: '湖南', city: '长沙', lng: 112.99, lat: 28.21, cap: 20, img: 'doctor', unit: '湘雅医院社区卫生服务中心', persons: 300 },
+  { id: 17, name: '岳麓区青少年法治教育基地', c: 15, lv: '院级', col: '法学院', prov: '湖南', city: '长沙', lng: 112.93, lat: 28.23, cap: 40, img: 'justice', unit: '长沙市岳麓区人民法院', persons: 280 },
+  { id: 18, name: '梅溪湖街道社区治理示范点', c: 16, lv: '院级', col: '公共管理学院', prov: '湖南', city: '长沙', lng: 112.89, lat: 28.19, cap: 30, img: 'meeting', unit: '岳麓区梅溪湖街道办事处', persons: 240 },
+  { id: 19, name: '雨花区青年志愿者之家', c: 17, lv: '院级', col: '外国语学院', prov: '湖南', city: '长沙', lng: 113.03, lat: 28.13, cap: 50, img: 'volunteer', unit: '雨花区团委', persons: 410 },
+  { id: 20, name: '湖南省廉政教育馆', c: 18, lv: '校级', prov: '湖南', city: '长沙', lng: 112.96, lat: 28.25, cap: 60, img: 'library', unit: '湖南省纪委监委', persons: 330 },
+  { id: 21, name: '中国国家博物馆', c: 19, lv: '校级', prov: '北京', city: '北京', lng: 116.40, lat: 39.90, cap: 100, img: 'palace', unit: '中国国家博物馆', persons: 640 },
+  { id: 22, name: '长沙市第一中学思政一体化基地', c: 2, lv: '院级', col: '马克思主义学院', prov: '湖南', city: '长沙', lng: 112.99, lat: 28.20, cap: 30, img: 'classroom', unit: '长沙市第一中学', persons: 260 },
+  { id: 23, name: '华为松山湖研发基地', c: 14, lv: '院级', col: '计算机学院', prov: '广东', city: '东莞', lng: 113.90, lat: 22.90, cap: 30, img: 'students', unit: '华为技术有限公司', persons: 380 },
+  { id: 24, name: '雷锋纪念馆', c: 6, lv: '校级', prov: '湖南', city: '长沙', lng: 112.82, lat: 28.36, cap: 80, img: 'youth', unit: '雷锋纪念馆', persons: 900 },
+  { id: 25, name: '“中国天眼”FAST 科普基地', c: 11, lv: '校级', prov: '贵州', city: '黔南', lng: 106.86, lat: 25.65, cap: 40, img: 'earth', unit: '中国科学院国家天文台', persons: 450 },
+  { id: 26, name: '大庆油田铁人王进喜纪念馆', c: 12, lv: '校级', prov: '黑龙江', city: '大庆', lng: 125.00, lat: 46.60, cap: 60, img: 'power', unit: '大庆油田有限责任公司', persons: 310 },
+  { id: 27, name: '港珠澳大桥建设展示中心', c: 10, lv: '校级', prov: '广东', city: '珠海', lng: 113.58, lat: 22.20, cap: 50, img: 'citynight', unit: '港珠澳大桥管理局', persons: 470 },
+  { id: 28, name: '西柏坡纪念馆', c: 0, lv: '校级', prov: '河北', city: '石家庄', lng: 114.00, lat: 38.35, cap: 80, img: 'greatwall2', unit: '西柏坡纪念馆', persons: 530 },
+  { id: 29, name: '遵义会议纪念馆', c: 5, lv: '校级', prov: '贵州', city: '遵义', lng: 106.93, lat: 27.70, cap: 80, img: 'greatwall', unit: '遵义会议纪念馆', persons: 600 },
+  { id: 30, name: '浏阳大围山镇乡村振兴点', c: 7, lv: '院级', col: '经济管理学院', prov: '湖南', city: '浏阳', lng: 114.10, lat: 28.30, cap: 40, img: 'veg', unit: '浏阳市大围山镇人民政府', persons: 290 },
+  { id: 31, name: '上海洋山深水港', c: 14, lv: '院级', col: '经济管理学院', prov: '上海', city: '上海', lng: 122.05, lat: 30.62, cap: 30, img: 'shanghai', unit: '上港集团', persons: 220 },
+  { id: 32, name: '敦煌研究院', c: 4, lv: '校级', prov: '甘肃', city: '酒泉', lng: 94.66, lat: 40.14, cap: 40, img: 'valley', unit: '敦煌研究院', persons: 340 },
+  { id: 33, name: '兵团军垦博物馆', c: 3, lv: '校级', prov: '新疆', city: '石河子', lng: 86.04, lat: 44.30, cap: 60, img: 'mountain', unit: '新疆生产建设兵团军垦博物馆', persons: 260 },
+  { id: 34, name: '林芝援藏乡村振兴实践点', c: 7, lv: '院级', col: '环境学院', prov: '西藏', city: '林芝', lng: 94.36, lat: 29.65, cap: 20, img: 'mountain2', unit: '林芝市巴宜区人民政府', persons: 120 },
+  { id: 35, name: '酒泉卫星发射中心', c: 10, lv: '校级', prov: '甘肃', city: '酒泉', lng: 100.30, lat: 40.96, cap: 30, img: 'rocket', unit: '酒泉卫星发射中心', persons: 200 },
+  { id: 36, name: '湖南省博物馆', c: 4, lv: '校级', prov: '湖南', city: '长沙', lng: 112.99, lat: 28.21, cap: 100, img: 'dumpling', unit: '湖南省博物馆', persons: 1050 }
+];
+
+// 优秀案例（第二课堂已结项评优项目 + 管理员遴选）
+const CASES = [
+  { id: 1, title: '青春践行“两山”理念：余村绿色发展调研', col: '环境学院', c: 8, place: '浙江湖州', year: '2025-2026', views: 3260, img: 'forestair' },
+  { id: 2, title: '十八洞村精准扶贫十年回访与产业振兴调研', col: '经济管理学院', c: 7, place: '湖南湘西', year: '2025-2026', views: 2980, img: 'terrace' },
+  { id: 3, title: '走进“灯塔工厂”：智能制造人才需求调研', col: '机械工程学院', c: 10, place: '湖南长沙', year: '2025-2026', views: 2410, img: 'engineer' },
+  { id: 4, title: '红色足迹·韶山：青年讲解员宣讲实践', col: '马克思主义学院', c: 5, place: '湖南湘潭', year: '2025-2026', views: 2350, img: 'mountain2' },
+  { id: 5, title: '算力强国：超算中心科普进中小学', col: '计算机学院', c: 9, place: '湖南长沙', year: '2024-2025', views: 2120, img: 'data' },
+  { id: 6, title: '禾下乘凉梦：杂交水稻科学家精神寻访', col: '文学院', c: 11, place: '湖南长沙', year: '2024-2025', views: 1980, img: 'field' },
+  { id: 7, title: '社区“银龄”健康守护志愿服务', col: '医学院', c: 13, place: '湖南长沙', year: '2024-2025', views: 1760, img: 'doctor' },
+  { id: 8, title: '法治进校园：青少年模拟法庭巡讲', col: '法学院', c: 15, place: '湖南长沙', year: '2024-2025', views: 1650, img: 'justice' },
+  { id: 9, title: '石榴籽一家亲：湘西民族文化影像志', col: '马克思主义学院', c: 3, place: '湖南湘西', year: '2024-2025', views: 1520, img: 'hands' },
+  { id: 10, title: '大国工程港珠澳大桥建设者口述史', col: '外国语学院', c: 10, place: '广东珠海', year: '2023-2024', views: 1430, img: 'citynight' },
+  { id: 11, title: '湖湘非遗数字化保护与传播实践', col: '文学院', c: 4, place: '湖南长沙', year: '2023-2024', views: 1380, img: 'dumpling' },
+  { id: 12, title: '基层治理“微网格”运行机制调研', col: '公共管理学院', c: 16, place: '湖南长沙', year: '2023-2024', views: 1210, img: 'meeting' }
+];
+
+// 详情展示字段：按基地序号生成，不另造合作模式选项（字典 dekt_hzms 无条目）
+(function () {
+  var PROV_FULL = {
+    北京: '北京市', 上海: '上海市', 天津: '天津市', 重庆: '重庆市',
+    湖南: '湖南省', 江西: '江西省', 陕西: '陕西省', 浙江: '浙江省', 河北: '河北省',
+    广东: '广东省', 贵州: '贵州省', 黑龙江: '黑龙江省', 甘肃: '甘肃省',
+    新疆: '新疆维吾尔自治区', 西藏: '西藏自治区'
+  };
+  var CITY_FULL = {
+    湘潭: '湘潭市', 长沙: '长沙市', 湘西: '湘西土家族苗族自治州', 北京: '北京市',
+    吉安: '吉安市', 延安: '延安市', 嘉兴: '嘉兴市', 湖州: '湖州市', 承德: '承德市',
+    东莞: '东莞市', 黔南: '黔南布依族苗族自治州', 大庆: '大庆市', 珠海: '珠海市',
+    石家庄: '石家庄市', 遵义: '遵义市', 上海: '上海市', 酒泉: '酒泉市',
+    石河子: '石河子市', 林芝: '林芝市', 浏阳: '浏阳市'
+  };
+  var CAT_THEME = {
+    0: '五史教育', 1: '国家安全教育', 2: '大中小学思想政治教育一体化建设',
+    3: '铸牢中华民族共同体意识', 4: '中华优秀传统文化', 5: '革命文化',
+    6: '社会主义先进文化', 7: '脱贫攻坚乡村振兴', 8: '绿色发展', 9: '攀高攻坚',
+    10: '大国重器', 11: '弘扬科学家精神', 12: '工业文化', 13: '健康中国',
+    14: '行业认知', 15: '普法与法治建设', 16: '基层治理', 17: '社区服务',
+    18: '廉政教育', 19: '爱国主义教育'
+  };
+  var DIR = {
+    0: '党史学习、红色宣讲、口述史采集',
+    1: '国家安全教育参观、形势政策宣讲',
+    2: '大中小学思政课一体化研学、联合备课观摩',
+    3: '民族团结进步教育、文化交流实践',
+    4: '传统文化研学、非遗传承体验',
+    5: '红色研学、青年讲解、革命精神宣讲',
+    6: '先进文化宣讲、典型事迹寻访',
+    7: '乡村振兴调研、产业观察、驻村实践',
+    8: '生态调研、绿色发展观察、环保实践',
+    9: '科研机构参观、技术攻关访谈',
+    10: '大国工程参观、技术研学、工匠访谈',
+    11: '科学家精神寻访、科普实践',
+    12: '工业文化调研、企业见习、智能制造参观',
+    13: '健康服务、社区义诊、公共卫生宣教',
+    14: '行业认知、企业见习、职业体验',
+    15: '法治教育、模拟法庭、普法宣传',
+    16: '基层治理调研、社区走访、网格观察',
+    17: '志愿服务、社区服务、公益劳动',
+    18: '廉政教育参观、警示教育',
+    19: '爱国主义教育、讲解服务、主题研学'
+  };
+  var DIR_EXTRA = ['可结合专业开展调研访谈', '支持志愿服务与公益劳动', '可安排见习或岗位体验', '适合国情考察与社会调查'];
+  var INTRO_TAIL = [
+    '可承接专题调研、实地研学与志愿服务，配有专人对接和安全保障。',
+    '实践期间由共建单位安排讲解与岗位带教，适合团队集中开展。',
+    '场地可开展参观、访谈与小型研讨，接待规模见岗位数量。',
+    '已形成多项实践成果，可按开放时间与基地联系人对接。'
+  ];
+  var HOURS = [
+    '周一至周五 9:00 至 16:00',
+    '周一至周五 8:30 至 17:00',
+    '周二至周日 9:00 至 16:30',
+    '周一至周六 9:00 至 17:00',
+    '周三至周日 8:30 至 16:30',
+    '周一至周五 9:00 至 16:30'
+  ];
+  var ENDS = ['2026-12-31', '2027-03-31', '2027-06-30', '2027-08-31', '2027-09-30', '2027-12-15', '2028-02-28', '2028-05-31', '2027-04-30', '2028-06-30'];
+  var BASE_CONTACTS = ['刘老师', '周工', '陈主任', '吴经理', '张馆长', '何书记', '马站长', '孙老师', '赵主任', '钱工', '郑馆员', '冯老师'];
+  var SCHOOL_CONTACTS = ['王老师', '陈老师', '李老师', '赵老师', '刘老师', '周老师', '吴老师', '郑老师'];
+  var AREA = {
+    湖南: '0731', 北京: '010', 江西: '0796', 陕西: '0911', 浙江: '0571', 河北: '0314',
+    广东: '0769', 贵州: '0854', 黑龙江: '0459', 上海: '021', 甘肃: '0937', 新疆: '0993', 西藏: '0894'
+  };
+  var ROADS = ['文化路', '建设大道', '人民路', '学府路', '工业大道', '滨江路', '解放路', '中山路', '青年路', '车站路'];
+  var KNOWN_ADDR = {
+    1: '湖南省湘潭市韶山市韶山乡韶山村铜钟路 16 号',
+    2: '湖南省长沙市岳麓区橘子洲头',
+    3: '湖南省湘西土家族苗族自治州花垣县双龙镇十八洞村',
+    6: '湖南省长沙市长沙县经济技术开发区三一路 1 号',
+    7: '江西省吉安市井冈山市茨坪红军北路 1 号',
+    10: '浙江省湖州市安吉县天荒坪镇余村',
+    12: '湖南省长沙市芙蓉区远大二路 736 号',
+    21: '北京市东城区东长安街 16 号',
+    25: '贵州省黔南布依族苗族自治州平塘县克度镇',
+    27: '广东省珠海市香洲区港珠澳大桥口岸',
+    35: '甘肃省酒泉市金塔县航天镇',
+    36: '湖南省长沙市开福区东风路 50 号'
+  };
+  var PHOTO_POOL = ['students', 'team', 'lecture', 'library', 'campus', 'building', 'meeting', 'youth', 'classroom', 'hands'];
+
+  function regionOf(b) {
+    var prov = PROV_FULL[b.prov] || b.prov;
+    var city = CITY_FULL[b.city] || b.city;
+    return prov === city ? prov : prov + city;
+  }
+  function tel(area, n) {
+    var left = 2000 + ((n * 173) % 7000);
+    var right = 1000 + ((n * 91) % 9000);
+    return area + '-' + left + ' ' + right;
+  }
+  function pickCases(b, n) {
+    var list = CASES.filter(function (c) { return c.c === b.c; });
+    var i;
+    for (i = 0; i < CASES.length && list.length < 2; i++) {
+      var c = CASES[i];
+      var seen = list.some(function (x) { return x.id === c.id; });
+      if (!seen && c.place && c.place.indexOf(b.city) >= 0) list.push(c);
+    }
+    if (!list.length) list.push(CASES[n % CASES.length]);
+    if (list.length < 2 && b.id % 5 !== 0) {
+      var extra = CASES[(n + 3) % CASES.length];
+      if (extra.id !== list[0].id) list.push(extra);
+    }
+    var count = b.id % 5 === 0 ? 1 : Math.min(2, list.length);
+    return list.slice(0, count).map(function (c) { return c.id; });
+  }
+
+  BASES.forEach(function (b) {
+    var n = b.id - 1;
+    var primary = CAT_THEME[b.c] || (CATS[b.c] && CATS[b.c].name) || '爱国主义教育';
+    var themes = [primary];
+    if (b.id % 4 === 0) {
+      var more = PRACTICE_THEMES[(b.c + 3) % PRACTICE_THEMES.length];
+      if (more !== primary) themes.push(more);
+    }
+    var dirs = DIR[b.c] || '专题调研、志愿服务、实践教学';
+    if (b.id % 2 === 0) dirs += '，' + DIR_EXTRA[b.id % DIR_EXTRA.length];
+    var photos = [b.img];
+    var p = 0;
+    while (photos.length < 4 && p < PHOTO_POOL.length + 2) {
+      var key = PHOTO_POOL[(n + p) % PHOTO_POOL.length];
+      if (photos.indexOf(key) < 0) photos.push(key);
+      p++;
+    }
+    var award = AWARD_OPTIONS[n % AWARD_OPTIONS.length];
+    var awarded = award === '授牌并签订协议' || award === '仅授牌';
+    b.code = 'SJJD-' + String(200 + b.id).padStart(3, '0');
+    b.lead = b.col || '校团委';
+    b.unitType = UNIT_TYPES[n % UNIT_TYPES.length];
+    b.baseType = BASE_TYPES[n % BASE_TYPES.length];
+    b.themes = themes;
+    b.hzms = '';
+    b.region = regionOf(b);
+    b.addr = KNOWN_ADDR[b.id] || (b.region + ROADS[n % ROADS.length] + ' ' + (8 + (n * 13) % 160) + ' 号');
+    b.dirs = dirs;
+    b.intro = b.name + '由' + b.lead + '牵头、' + b.unit + '共建，围绕「' + primary + '」开展社会实践。' + INTRO_TAIL[n % INTRO_TAIL.length] + '累计接待我校学生 ' + b.persons + ' 人次。';
+    b.contact = BASE_CONTACTS[n % BASE_CONTACTS.length];
+    b.phone = tel(AREA[b.prov] || '0731', 80 + b.id);
+    b.openTime = HOURS[n % HOURS.length];
+    b.caseIds = pickCases(b, n);
+    b.photos = photos;
+    b.status = b.id % 11 === 0 ? '停用' : '正常';
+    b.score = (35 + (b.id * 3) % 16) / 10;
+    b.award = award;
+    b.awarded = awarded;
+    b.plaqueCount = awarded ? (b.id % 3) + 1 : 0;
+    b.until = ENDS[n % ENDS.length];
+    b.schoolContact = SCHOOL_CONTACTS[(n + 3) % SCHOOL_CONTACTS.length];
+    b.schoolPhone = tel('0731', 400 + b.id);
+    b.agreeFile = '共建协议-' + b.code + '.pdf';
+    b.plaqueFile = '牌匾扫描件-' + b.code + '.jpg';
+  });
+})();
+
+// 优秀案例正文：编辑页、学生详情、教师只读弹窗共用这一套字段
+(function () {
+  var LEVEL = { 2: '国家级立项', 12: '院级优秀' };
+  var ADVISORS = ['陈思远', '王敏', '赵磊', '李娜', '孙倩', '周宁', '吴迪', '郑凯', '马琳', '黄蕾', '何俊', '徐阳'];
+  var PHOTO_POOL = ['students', 'team', 'lecture', 'library', 'campus', 'building', 'meeting', 'youth', 'classroom', 'hands', 'factory', 'engineer'];
+  var BASE_OF = { 1: 10, 2: 3, 3: 6, 4: 1, 5: 13, 6: 12, 7: 16, 8: 17, 9: 14, 10: 27, 11: 36, 12: 18 };
+
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+  CASES.forEach(function (c) {
+    var n = c.id;
+    var theme = CATS[c.c] ? CATS[c.c].name : '社会实践';
+    var endYear = String(c.year || '').split('-')[1] || '2026';
+    var startMonth = n % 2 === 0 ? 7 : 8;
+    var startDay = 6 + (n % 10);
+    var endDay = startDay + 9;
+    var endMonth = startMonth;
+    if (endDay > 28) {
+      endDay -= 28;
+      endMonth += 1;
+    }
+    var photos = [];
+    var p = 0;
+    while (photos.length < 3 && p < 24) {
+      var key = PHOTO_POOL[(n + p) % PHOTO_POOL.length];
+      if (key !== c.img && photos.indexOf(key) < 0) photos.push(key);
+      p++;
+    }
+    c.level = LEVEL[n] || '校级优秀';
+    c.tags = [c.c];
+    c.period = endYear + '.' + pad2(startMonth) + '.' + pad2(startDay) + ' - ' + endYear + '.' + pad2(endMonth) + '.' + pad2(endDay);
+    c.team = '团队 ' + (8 + (n * 3) % 13) + ' 人';
+    c.advisor = ADVISORS[(n - 1) % ADVISORS.length];
+    c.summary = '团队围绕「' + theme + '」在' + c.place + '开展实践，完成调研访谈与成果整理，形成可复用的实践材料，获评' + c.level + '。';
+    c.background = '为把「' + theme + '」从课堂延伸到现场，' + c.col + '组织团队前往' + c.place + '，围绕《' + c.title + '》开展实地调研、访谈与服务，探索可复制的实践育人路径。';
+    c.insight = '一是行前与接待单位对齐日程和安全事项；二是分组推进调研、记录和宣传，避免成果只停留在现场；三是结项时把做法整理成可交接的材料，供后续团队继续使用。';
+    c.achievements = [
+      { n: String(10 + n * 3), label: '实地访谈' },
+      { n: String(20 + n * 5), label: '服务人次' },
+      { n: String(1 + (n % 4)), label: '调研报告' },
+      { n: String(1 + (n % 3)), label: '成果转化' }
+    ];
+    c.photos = photos;
+    c.files = [
+      { name: '实践成果报告.pdf', meta: '2.4 MB', icon: 'file-text', color: '#DC2626' },
+      { name: '实践纪实.mp4', meta: '2 分 10 秒', icon: 'file-video', color: '#7C3AED' },
+      { name: '实践照片（12 张）', meta: '已脱敏', icon: 'image', color: '#16A34A' }
+    ];
+    c.baseId = BASE_OF[n] || null;
+    c.projectNo = 'SJ' + endYear + '-' + String(7000 + n);
+    c.finished = endYear + '-09';
+  });
+
+  var light = null;
+  var li;
+  for (li = 0; li < CASES.length; li++) if (CASES[li].id === 3) light = CASES[li];
+  if (light) {
+    light.place = '湖南省长沙市 · 三一重工“灯塔工厂”';
+    light.level = '校级优秀';
+    light.tags = [10, 12];
+    light.period = '2026.08.18 - 2026.08.27';
+    light.team = '团队 18 人';
+    light.advisor = '刘建华';
+    light.summary = '团队深入三一重工“灯塔工厂”开展为期 10 天的驻厂调研，访谈一线工程师 36 人，发放问卷 520 份，形成《智能制造背景下工程技术人才能力需求调研报告》，提出 5 项人才培养改革建议，其中 2 项被学院采纳纳入培养方案修订。';
+    light.background = '为服务智能制造人才培养，团队依托学校与三一重工共建的“灯塔工厂”实践基地，把机械设计、智能制造课程与焊接、装配、数字孪生等一线岗位对接。学生以驻厂调研的方式观察产线如何选人、用人，为学院修订培养方案收集第一手依据。';
+    light.insight = '一是行前与基地对齐接待岗位和访谈名单，10 天驻厂安排才落得下来；二是问卷与访谈一起做，用工程师的原话核对数据；三是把改革建议写成能直接提交培养方案讨论的条目，其中 2 项已被学院采纳，后续团队可以接着用。';
+    light.achievements = [
+      { n: '36', label: '访谈工程师' },
+      { n: '520', label: '发放问卷' },
+      { n: '5', label: '改革建议' },
+      { n: '2', label: '纳入培养方案' }
+    ];
+    light.photos = ['factory', 'students', 'team'];
+    light.files = [
+      { name: '调研报告终稿.pdf', meta: '4.2 MB', icon: 'file-text', color: '#DC2626' },
+      { name: '实践纪实短片.mp4', meta: '3 分 50 秒', icon: 'file-video', color: '#7C3AED' },
+      { name: '实践照片（24 张）', meta: '已脱敏', icon: 'image', color: '#16A34A' }
+    ];
+    light.baseId = 6;
+    light.projectNo = 'SJ2026-0712';
+    light.finished = '2026-09';
+  }
+})();
+
+// 渲染一个带颜色的专题标签
+function catTag(i){ return '<span class="tag tag-c" style="--c:' + CATS[i].color + '">' + CATS[i].name + '</span>'; }
+
+function htmlEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (ch) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+  });
+}
+
+// 案例正文的字段顺序。编辑表单与只读详情按这个顺序展示。
+const CASE_BODY_FIELDS = [
+  '案例标题', '专题标签', '评优等级', '学年', '所属学院', '实践地点', '实践时间',
+  '实践团队', '指导教师', '浏览次数', '封面图片', '成果摘要', '实践背景', '实践成果',
+  '实践掠影', '经验与启示', '成果附件'
+];
+
+function caseFromQuery(fallbackId) {
+  var fb = fallbackId || 3;
+  var raw = '';
+  try { raw = new URLSearchParams(location.search).get('id') || ''; } catch (err) { raw = ''; }
+  var id = raw === '' ? fb : Number(raw);
+  var i, found = null, backup = null;
+  for (i = 0; i < CASES.length; i++) {
+    if (CASES[i].id === id) found = CASES[i];
+    if (CASES[i].id === fb) backup = CASES[i];
+  }
+  return found || backup || CASES[0];
+}
+
+function caseFields(c) {
+  var idx = (c.tags && c.tags.length) ? c.tags : [c.c];
+  var tags = [];
+  var i;
+  for (i = 0; i < idx.length; i++) {
+    var cat = CATS[idx[i]];
+    if (cat) tags.push({ i: idx[i], name: cat.name, color: cat.color });
+  }
+  return {
+    id: c.id,
+    title: c.title,
+    tags: tags,
+    level: c.level || '',
+    year: c.year,
+    col: c.col,
+    place: c.place,
+    period: c.period || '',
+    team: c.team || '',
+    advisor: c.advisor || '',
+    views: String(c.views).replace(/\B(?=(\d{3})+(?!\d))/g, ','),
+    img: c.img,
+    summary: c.summary || '',
+    background: c.background || '',
+    achievements: c.achievements || [],
+    photos: c.photos || [],
+    insight: c.insight || '',
+    files: c.files || []
+  };
+}
+
+function caseReadHtml(c) {
+  var f = caseFields(c);
+  function row(label, html, full) {
+    return '<div data-field="' + label + '"' + (full ? ' class="full"' : '') + '><span class="k">' + label + '</span><span>' + html + '</span></div>';
+  }
+  function block(label, html) {
+    return '<div data-field="' + label + '"><h3>' + label + '</h3>' + html + '</div>';
+  }
+  var tags = f.tags.map(function (t) {
+    return '<span class="tag tag-c" style="--c:' + t.color + '">' + htmlEsc(t.name) + '</span>';
+  }).join('');
+  var ach = f.achievements.map(function (a) {
+    return '<div><b class="num">' + htmlEsc(a.n) + '</b><span>' + htmlEsc(a.label) + '</span></div>';
+  }).join('');
+  var pics = f.photos.map(function (key) {
+    return '<img data-shot="实践掠影" src="' + img(key, 500, 300) + '" alt="实践掠影">';
+  }).join('');
+  var files = f.files.map(function (file) {
+    return '<div class="file"><i data-lucide="' + file.icon + '" style="color:' + (file.color || '#64748B') + '"></i><span>' + htmlEsc(file.name) + '</span><span class="muted small">' + htmlEsc(file.meta) + '</span></div>';
+  }).join('');
+  return '<div data-field="案例标题"><div class="case-k">案例标题</div><h1 class="case-title">' + htmlEsc(f.title) + '</h1></div>'
+    + '<div class="desc case-meta">'
+    + row('专题标签', '<span class="flex gap-8">' + tags + '</span>', true)
+    + row('评优等级', htmlEsc(f.level))
+    + row('学年', htmlEsc(f.year))
+    + row('所属学院', htmlEsc(f.col))
+    + row('实践地点', htmlEsc(f.place))
+    + row('实践时间', htmlEsc(f.period))
+    + row('实践团队', htmlEsc(f.team))
+    + row('指导教师', htmlEsc(f.advisor))
+    + row('浏览次数', htmlEsc(f.views))
+    + '</div>'
+    + block('封面图片', '<img class="cover" data-shot="案例封面" src="' + img(f.img, 1400, 720) + '" alt="案例封面">')
+    + block('成果摘要', '<div class="summary">' + htmlEsc(f.summary) + '</div>')
+    + block('实践背景', '<p>' + htmlEsc(f.background) + '</p>')
+    + block('实践成果', '<div class="achieve">' + ach + '</div>')
+    + block('实践掠影', '<div class="pics" data-shots="实践掠影">' + pics + '</div>')
+    + block('经验与启示', '<p>' + htmlEsc(f.insight) + '</p>')
+    + block('成果附件', '<div class="files">' + files + '</div>');
+}
+
+</script>
+<style>
+/* ========== 大屏设计令牌 ========== */
+:root{--bg1:#061A4A;--bg2:#0B2A7A;--glow:#3DD6FF;--glow2:#5B8CFF;--panel:rgba(16,52,140,.42);--panel-b:rgba(80,160,255,.28);--text:#E6F0FF;--text-2:#9FB7E6;--gold:#FFD36B}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);font-size:14px;min-width:1280px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 0%,#1A47B8 0%,transparent 60%),linear-gradient(180deg,var(--bg1),var(--bg2) 60%,#071C55)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(61,214,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(61,214,255,.05) 1px,transparent 1px);background-size:36px 36px}
+a{color:inherit;text-decoration:none}
+svg.lucide{width:16px;height:16px;stroke-width:2;flex-shrink:0}
+.num{font-family:"DIN Alternate","Bahnschrift","Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums}
+.screen{position:relative;height:100vh;display:grid;grid-template-rows:72px 104px 1fr;gap:12px;padding:0 20px 16px}
+
+/* ========== 顶栏 ========== */
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;position:relative}
+.top-nav{display:flex;gap:8px}
+.top-nav a,.top-r .tb{display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;white-space:nowrap;font-size:13px;color:var(--text-2);border:1px solid var(--panel-b);background:rgba(20,70,180,.25);clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);transition:.2s}
+.top-nav a:hover,.top-r .tb:hover{color:#fff;background:rgba(61,214,255,.18)}
+.top-nav a.on{color:#fff;background:linear-gradient(90deg,rgba(61,214,255,.35),rgba(91,140,255,.25))}
+.title{position:relative;padding:0 64px;height:72px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(40,110,255,.35),rgba(40,110,255,0));clip-path:polygon(0 0,100% 0,calc(100% - 48px) 100%,48px 100%)}
+.title::after{content:"";position:absolute;left:48px;right:48px;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--glow),transparent)}
+.title h1{font-size:26px;letter-spacing:5px;white-space:nowrap;font-weight:700;background:linear-gradient(180deg,#fff,#9FD8FF);-webkit-background-clip:text;color:transparent;text-shadow:0 0 24px rgba(61,214,255,.35)}
+.title small{position:absolute;bottom:6px;font-size:11px;letter-spacing:4px;color:var(--text-2)}
+.top-r{display:flex;justify-content:flex-end;align-items:center;gap:10px}
+.top-r .clock{font-size:13px;color:var(--text-2);margin-right:6px}
+.top-r select{height:32px;background:rgba(20,70,180,.35);border:1px solid var(--panel-b);color:#fff;border-radius:4px;padding:0 8px;outline:none}
+.top-r .me{display:flex;align-items:center;gap:8px;font-size:13px;white-space:nowrap}
+.top-r .clock{white-space:nowrap}
+.top-r .me img{width:30px;height:30px;border-radius:50%;border:2px solid var(--glow);object-fit:cover}
+
+/* ========== 指标卡 ========== */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.kpi{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(40,110,255,.18),rgba(40,110,255,.05));border:1px solid var(--panel-b)}
+.kpi::before,.kpi::after{content:"";position:absolute;width:12px;height:12px;border:2px solid var(--glow)}
+.kpi::before{left:-1px;top:-1px;border-right:none;border-bottom:none}
+.kpi::after{right:-1px;bottom:-1px;border-left:none;border-top:none}
+.kpi b{font-size:38px;line-height:1.1;background:linear-gradient(180deg,#fff,#7CC8FF);-webkit-background-clip:text;color:transparent}
+.kpi b small{font-size:14px;-webkit-text-fill-color:var(--text-2);margin-left:4px}
+.kpi span{margin-top:6px;font-size:14px;letter-spacing:2px;padding:2px 24px;background:linear-gradient(90deg,transparent,rgba(61,150,255,.45),transparent)}
+
+/* ========== 主体三栏 ========== */
+.main{display:grid;grid-template-columns:260px 1fr 330px;gap:14px;min-height:0}
+.panel{position:relative;background:var(--panel);border:1px solid var(--panel-b);display:flex;flex-direction:column;min-height:0;backdrop-filter:blur(4px)}
+.panel-hd{height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 14px 0 30px;font-weight:600;font-size:15px;letter-spacing:1px;background:linear-gradient(90deg,rgba(61,150,255,.45),transparent);position:relative;flex-shrink:0}
+.panel-hd::before{content:"";position:absolute;left:12px;width:8px;height:8px;background:var(--glow);transform:rotate(45deg);box-shadow:0 0 8px var(--glow)}
+.panel-hd small{font-weight:400;font-size:12px;color:var(--text-2);letter-spacing:0}
+.panel-hd a{font-weight:400;font-size:12px;color:var(--text-2)}
+.panel-hd a:hover{color:var(--glow)}
+.panel-bd{padding:10px 12px;overflow-y:auto;min-height:0}
+.panel-bd::-webkit-scrollbar{width:4px}
+.panel-bd::-webkit-scrollbar-thumb{background:rgba(61,214,255,.3);border-radius:2px}
+
+/* 左栏：专题图例筛选 */
+.cats{display:flex;flex-direction:column;gap:2px}
+.cat{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;cursor:pointer;font-size:13px;color:var(--text-2);transition:.15s;border:1px solid transparent}
+.cat:hover{background:rgba(61,214,255,.08);color:#fff}
+.cat.on{color:#fff;background:rgba(61,214,255,.12);border-color:rgba(61,214,255,.35)}
+.cat i{width:10px;height:10px;border-radius:2px;background:var(--c);box-shadow:0 0 6px var(--c);flex-shrink:0}
+.cat span{flex:1}
+.cat em{font-style:normal;font-size:12px;color:var(--text-2)}
+.cat-all{display:flex;justify-content:space-between;font-size:12px;color:var(--text-2);padding:0 8px 6px}
+.cat-all a{color:var(--glow);cursor:pointer}
+.side-filters{flex-shrink:0;padding:10px 12px 8px;border-bottom:1px dashed var(--panel-b)}
+.cat-scroll{flex:1;padding-top:8px}
+.extra{margin:0;padding-top:2px;display:grid;gap:10px}
+.extra label{font-size:12px;color:var(--text-2);display:block;margin-bottom:4px}
+.seg{display:flex;border:1px solid var(--panel-b);border-radius:4px;overflow:hidden}
+.seg span{flex:1;text-align:center;font-size:12px;padding:4px 0;cursor:pointer;color:var(--text-2)}
+.seg span.on{background:rgba(61,214,255,.25);color:#fff}
+.extra select{width:100%;height:30px;background:rgba(10,40,120,.6);border:1px solid var(--panel-b);color:#fff;border-radius:4px;padding:0 8px;outline:none}
+.toggle{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text-2)}
+.sw{width:34px;height:18px;border-radius:9px;background:rgba(255,255,255,.2);position:relative;cursor:pointer;transition:.2s}
+.sw::after{content:"";position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.2s}
+.sw.on{background:var(--glow)}
+.sw.on::after{left:18px}
+
+/* 中栏：地图 */
+.map-box{position:relative;border:1px solid var(--panel-b);background:radial-gradient(ellipse at center,rgba(40,110,255,.18),transparent 70%);min-height:0}
+#map{position:absolute;inset:0}
+.search{position:absolute;left:16px;top:14px;z-index:5;display:flex;width:340px;height:38px;background:rgba(6,26,74,.85);border:1px solid var(--glow);box-shadow:0 0 16px rgba(61,214,255,.25)}
+.search input{flex:1;background:none;border:none;outline:none;color:#fff;padding:0 12px;font-size:13px}
+.search input::placeholder{color:var(--text-2)}
+.search button{width:44px;background:linear-gradient(90deg,#2B6CFF,#3DD6FF);border:none;color:#fff;cursor:pointer;display:grid;place-items:center}
+.suggest{position:absolute;left:16px;top:54px;width:340px;z-index:6;background:rgba(6,26,74,.96);border:1px solid var(--panel-b);display:none;max-height:240px;overflow:auto}
+.suggest div{padding:8px 12px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;color:var(--text-2)}
+.suggest div:hover{background:rgba(61,214,255,.12);color:#fff}
+.map-tip{position:absolute;left:16px;top:60px;font-size:12px;color:var(--text-2);z-index:4}
+.map-tip b{color:var(--gold)}
+.zoom-tools{position:absolute;right:14px;bottom:14px;z-index:5;display:flex;flex-direction:column;gap:6px}
+.zoom-tools span{width:56px;height:28px;display:grid;place-items:center;font-size:12px;background:rgba(6,26,74,.85);border:1px solid var(--panel-b);cursor:pointer;color:var(--text-2);transition:.15s}
+.zoom-tools span:hover{color:#fff;border-color:var(--glow)}
+.ai-cta{position:absolute;left:16px;bottom:16px;z-index:5;display:flex;align-items:center;gap:12px;padding:12px 18px 12px 14px;background:linear-gradient(90deg,rgba(255,180,60,.25),rgba(255,120,60,.1));border:1px solid rgba(255,211,107,.6);cursor:pointer;transition:.25s;animation:breath 2.6s infinite}
+.ai-cta:hover{transform:translateY(-2px);background:linear-gradient(90deg,rgba(255,180,60,.4),rgba(255,120,60,.18))}
+.ai-cta .ic{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#FFD36B,#FF8A3D);display:grid;place-items:center;color:#5A2A00}
+.ai-cta .ic svg{width:22px;height:22px}
+.ai-cta b{display:block;color:var(--gold);font-size:15px}
+.ai-cta small{font-size:12px;color:var(--text-2)}
+@keyframes breath{50%{box-shadow:0 0 24px rgba(255,211,107,.35)}}
+
+/* 右栏：案例榜 / 活跃基地 */
+.rank-table{width:100%;font-size:13px;border-collapse:collapse}
+.rank-table th{color:var(--text-2);font-weight:400;text-align:left;padding:4px 6px;font-size:12px}
+.rank-table td{padding:7px 6px;border-bottom:1px solid rgba(80,160,255,.12);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.rank-table tr{cursor:pointer;transition:.15s}
+.rank-table tbody tr:hover td{background:rgba(61,214,255,.1);color:#fff}
+.rank-no{display:inline-grid;place-items:center;width:20px;height:20px;font-size:12px;border-radius:3px;background:rgba(255,255,255,.08)}
+.rank-no.top{background:linear-gradient(135deg,#FFD36B,#FF8A3D);color:#5A2A00;font-weight:700}
+.scroll-box{height:100%;overflow:hidden;position:relative}
+.scroll-inner{animation:scrollUp 30s linear infinite}
+.scroll-box:hover .scroll-inner{animation-play-state:paused}
+@keyframes scrollUp{to{transform:translateY(-50%)}}
+.hot{display:grid;gap:9px}
+.hot-item{display:grid;grid-template-columns:20px 1fr 52px;gap:8px;align-items:center;font-size:13px;cursor:pointer}
+.hot-item .bar{grid-column:2/4;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.hot-item .bar i{display:block;height:100%;background:linear-gradient(90deg,#2B6CFF,#3DD6FF);border-radius:3px}
+.hot-item .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hot-item .vv{text-align:right;color:var(--glow);font-size:12px}
+.right{display:grid;grid-template-rows:1.25fr 1fr;gap:14px;min-height:0}
+
+/* ========== 基地详情弹窗 ========== */
+.pop-mask{position:fixed;inset:0;background:rgba(2,10,30,.55);display:none;align-items:center;justify-content:center;z-index:50;backdrop-filter:blur(3px)}
+.pop-mask.show{display:flex;padding:16px}
+.pop{width:min(800px,100%);max-height:calc(100vh - 48px);overflow:auto;background:linear-gradient(180deg,#0E2F86,#0A2260);border:1px solid var(--glow);box-shadow:0 0 40px rgba(61,214,255,.3);animation:popIn .25s ease-out}
+@keyframes popIn{from{opacity:0;transform:scale(.96)}}
+.pop-hero{position:relative;height:132px}
+.pop-hero img{width:100%;height:100%;object-fit:cover}
+.pop-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,34,96,0) 30%,#0E2F86)}
+.pop-hero .x{position:absolute;right:12px;top:12px;z-index:2;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.4);display:grid;place-items:center;cursor:pointer}
+.pop-hero h2{position:absolute;left:20px;right:56px;bottom:12px;z-index:2;font-size:20px;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pop-bd{padding:4px 20px 16px}
+.pop-tags{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.ptag{font-size:12px;padding:2px 10px;border:1px solid var(--c,var(--panel-b));color:var(--c,var(--text-2));background:color-mix(in srgb,var(--c,#3DD6FF) 12%,transparent)}
+.pop-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;font-size:13px;background:rgba(0,0,0,.15);padding:12px 14px;border:1px solid rgba(80,160,255,.18)}
+.pop-grid div{display:flex;gap:8px;align-items:flex-start;min-width:0}
+.pop-grid .k{color:var(--text-2);width:68px;flex-shrink:0;line-height:1.45}
+.pop-grid .v{min-width:0;line-height:1.45;word-break:break-word}
+.pop-grid .full{grid-column:span 2}
+.pop h4{font-size:14px;margin:12px 0 6px;display:flex;align-items:center;gap:6px;color:var(--glow)}
+.pop p.intro{font-size:13px;color:var(--text-2);line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pop-imgs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pop-imgs img{height:72px;width:100%;object-fit:cover;border:1px solid var(--panel-b);cursor:zoom-in;transition:.2s}
+.pop-imgs img:hover{border-color:var(--glow);box-shadow:0 0 0 1px var(--glow)}
+.pop-imgs img:only-child{height:180px;max-width:420px}
+.viewer{position:fixed;inset:0;z-index:80;background:rgba(2,8,24,.86);display:none;align-items:center;justify-content:center}
+.viewer.show{display:flex}
+.viewer img{max-width:min(1080px,82vw);max-height:82vh;object-fit:contain;border:1px solid rgba(61,214,255,.45);box-shadow:0 0 40px rgba(61,214,255,.28);background:#061433}
+.viewer .x,.viewer .nav{position:absolute;display:grid;place-items:center;cursor:pointer;color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25)}
+.viewer .x{right:22px;top:18px;width:36px;height:36px;border-radius:50%}
+.viewer .nav{top:50%;width:42px;height:64px;transform:translateY(-50%)}
+.viewer .prev{left:18px}.viewer .next{right:18px}
+.viewer .cap{position:absolute;bottom:22px;color:#D6E6FF;font-size:13px;letter-spacing:1px}
+.past{display:grid;gap:6px}
+.past div{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;font-size:13px;padding:8px 12px;background:rgba(61,150,255,.1);border-left:2px solid var(--gold)}
+.past div>span{min-width:0}
+.past small{color:var(--text-2);flex-shrink:0}
+.pop-ft{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+.pbtn{display:flex;align-items:center;gap:6px;height:36px;padding:0 18px;border:1px solid var(--panel-b);color:var(--text);cursor:pointer;background:rgba(255,255,255,.04);transition:.2s;font-size:14px}
+.pbtn:hover{border-color:var(--glow);color:#fff}
+.pbtn.main{background:linear-gradient(90deg,#2B6CFF,#3DD6FF);border:none;color:#fff;font-weight:600}
+.pbtn.fav.on{color:var(--gold);border-color:var(--gold)}
+.proto-back{position:fixed;right:20px;bottom:20px;z-index:40;display:flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:17px;background:rgba(0,0,0,.55);color:#fff;font-size:13px;border:1px solid rgba(255,255,255,.2)}
+.proto-back:hover{background:rgba(0,0,0,.75)}
+.ro-tag{font-size:12px;color:var(--gold);border:1px solid var(--gold);padding:2px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="screen">
+  <!-- 顶栏 -->
+  <div class="top">
+    <nav class="top-nav" id="topNav">
+      <a class="on" href="map.html"><i data-lucide="map"></i>数字地图</a>
+      <a href="base-list.html"><i data-lucide="search"></i>基地检索</a>
+      <a href="ranking.html"><i data-lucide="trophy"></i>资源榜单</a>
+      <a href="cases.html"><i data-lucide="award"></i>优秀案例</a>
+    </nav>
+    <div class="title"><h1>社会实践基地资源库 · 数字地图</h1><small>SOCIAL PRACTICE BASE DIGITAL MAP</small></div>
+    <div class="top-r">
+      <span class="clock num" id="clock"></span>
+      <select title="学年"><option>2025-2026 学年</option><option>2024-2025 学年</option><option>全部学年</option></select>
+      <a class="tb" id="myLink" href="profile.html"><i data-lucide="user-round"></i>个人中心</a>
+      <a class="me" id="meBox" href="profile.html"><img src="https://images.unsplash.com/photo-1531545514256-b1400bc00f31?auto=format&fit=crop&q=80&w=80&h=80" alt="头像">张一鸣</a>
+    </div>
+  </div>
+
+  <!-- 指标卡 -->
+  <div class="kpis">
+    <div class="kpi"><b class="num" data-count="286">0<small>个</small></b><span>全国实践基地总数</span></div>
+    <div class="kpi"><b class="num" data-count="24">0<small>个</small></b><span>覆盖省份</span></div>
+    <div class="kpi"><b class="num" data-count="27">0<small>个</small></b><span>参与学院</span></div>
+    <div class="kpi"><b class="num" data-count="18642">0<small>人次</small></b><span>参与学生人次</span></div>
+    <div class="kpi"><b class="num" data-count="312">0<small>个</small></b><span>参与团队数</span></div>
+  </div>
+
+  <!-- 主体 -->
+  <div class="main">
+    <!-- 左：专题筛选 -->
+    <div class="panel">
+      <div class="panel-hd">专题筛选<small>可多选</small></div>
+      <div class="side-filters">
+        <div class="cat-all"><span>已选 <b id="selCount">全部</b></span><a onclick="selectAll()">重置</a></div>
+        <div class="extra">
+          <div><label>基地级别</label><div class="seg" id="lvSeg"><span class="on" data-v="">全部</span><span data-v="校级">校级</span><span data-v="院级">院级</span></div></div>
+          <div><label>可接待人数</label>
+            <select id="capSel"><option value="0">不限</option><option value="30">30 人以上</option><option value="50">50 人以上</option><option value="80">80 人以上</option></select></div>
+        </div>
+      </div>
+      <div class="panel-bd cat-scroll">
+        <div class="cats" id="cats"></div>
+      </div>
+    </div>
+
+    <!-- 中：地图 -->
+    <div class="map-box">
+      <div class="search">
+        <input id="kw" placeholder="输入基地名称、地点或主题关键词，如：韶山 / 乡村振兴" autocomplete="off">
+        <button onclick="doSearch()" title="搜索"><i data-lucide="search"></i></button>
+      </div>
+      <div class="suggest" id="suggest"></div>
+      <div class="map-tip">当前显示 <b id="shown">0</b> 个基地点位 · 点击点位查看详情</div>
+      <div id="map"></div>
+      <div class="zoom-tools">
+        <span onclick="zoomTo('全国')">全国</span><span onclick="zoomTo('湖南')">湖南</span><span onclick="zoomTo('长沙')">长沙</span>
+      </div>
+      <a class="ai-cta" id="aiCta" href="ai-match.html">
+        <span class="ic"><i data-lucide="sparkles"></i></span>
+        <span><b>为我推荐实践资源</b><small>AI 根据你的专业与意向智能匹配基地和案例</small></span>
+        <i data-lucide="chevron-right"></i>
+      </a>
+    </div>
+
+    <!-- 右：榜单 -->
+    <div class="right">
+      <div class="panel">
+        <div class="panel-hd">优秀实践案例<a href="cases.html">全部 ›</a></div>
+        <div class="panel-bd" style="overflow:hidden;padding-top:4px">
+          <table class="rank-table"><thead><tr><th style="width:36px">排名</th><th>案例名称</th><th style="width:86px">学院</th></tr></thead></table>
+          <div class="scroll-box" style="height:calc(100% - 26px)"><div class="scroll-inner"><table class="rank-table"><tbody id="caseRank"></tbody></table></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-hd">活跃基地 TOP 6<a href="ranking.html">榜单 ›</a></div>
+        <div class="panel-bd"><div class="hot" id="hotList"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 基地详情弹窗 -->
+<div class="pop-mask" id="popMask" onclick="if(event.target===this)closePop()">
+  <div class="pop">
+    <div class="pop-hero"><img id="pImg" src="" alt="基地实景"><span class="x" onclick="closePop()"><i data-lucide="x"></i></span><h2 id="pName"></h2></div>
+    <div class="pop-bd">
+      <div class="pop-tags" id="pTags"></div>
+      <div class="pop-grid" id="pGrid"></div>
+      <h4><i data-lucide="info"></i>基地简介</h4>
+      <p class="intro" id="pIntro"></p>
+      <h4><i data-lucide="image"></i>实景图片</h4>
+      <div class="pop-imgs" id="pImgs"></div>
+      <h4><i data-lucide="award"></i>过往优秀实践案例（脱敏展示）</h4>
+      <div class="past" id="pPast"></div>
+      <div class="pop-ft">
+        <span class="pbtn fav" id="favBtn" onclick="this.classList.toggle('on');this.lastChild.textContent=this.classList.contains('on')?'已收藏':'收藏'"><i data-lucide="star"></i><span>收藏</span></span>
+        <a class="pbtn main" id="detailBtn" href="base-detail.html"><i data-lucide="file-text"></i>查看完整详情</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="viewer" id="viewer" onclick="if(event.target===this)closeShot()">
+  <span class="x" onclick="closeShot()"><i data-lucide="x"></i></span>
+  <span class="nav prev" id="shotPrev" onclick="stepShot(-1)"><i data-lucide="chevron-left"></i></span>
+  <img id="vImg" alt="实景大图">
+  <span class="nav next" id="shotNext" onclick="stepShot(1)"><i data-lucide="chevron-right"></i></span>
+  <span class="cap" id="vCap">实景图片</span>
+</div>
+
+<a class="proto-back" href="../index.html"><i data-lucide="layout-grid"></i>原型导航</a>
+
+<script>
+// ========== 状态 ==========
+const state = { cats: new Set(), lv: '', cap: 0 };
+const pageParams = new URLSearchParams(location.search);
+const isTeacher = pageParams.get('from') === 'teacher';
+const isAdmin = pageParams.get('from') === 'admin';
+
+// 教师端进入：导航切换为教师端页面，隐藏学生端个人操作
+if (isTeacher) {
+  document.getElementById('topNav').innerHTML = '<a href="../teacher/home.html"><i data-lucide="arrow-left"></i>返回教师端</a><a class="on" href="#"><i data-lucide="map"></i>数字地图</a><a href="../teacher/bases.html"><i data-lucide="map-pinned"></i>实践基地</a><a href="../teacher/cases.html"><i data-lucide="award"></i>榜单与案例</a>';
+  document.getElementById('myLink').outerHTML = '<span class="ro-tag">指导教师 · 只读</span>';
+  document.getElementById('meBox').innerHTML = '<img src="' + img('meeting', 80, 80) + '" alt="头像">陈思远';
+  document.getElementById('meBox').href = '../teacher/home.html';
+  document.getElementById('aiCta').style.display = 'none';
+  document.getElementById('favBtn').style.display = 'none';
+  document.getElementById('clock').style.display = 'none';
+  Object.assign(document.getElementById('detailBtn'), { href: '../teacher/bases.html', innerHTML: '<i data-lucide="layout-grid"></i>返回基地列表' });
+}
+
+// 管理端进入：校级 / 院级只读查看，角色与管理端 localStorage、URL 保持一致
+if (isAdmin) {
+  var roleParam = pageParams.get('role');
+  if (roleParam === 'school' || roleParam === 'college') localStorage.setItem('sjjd-role', roleParam);
+  var adminRole = localStorage.getItem('sjjd-role') === 'college' ? 'college' : 'school';
+  var adminHome = '../admin/dashboard.html?role=' + adminRole;
+  var adminBases = '../admin/bases.html?role=' + adminRole;
+  var isSchool = adminRole === 'school';
+  document.getElementById('topNav').innerHTML = '<a href="' + adminHome + '"><i data-lucide="arrow-left"></i>返回管理端</a><a class="on" href="#"><i data-lucide="map"></i>数字地图</a><a href="' + adminBases + '"><i data-lucide="map-pinned"></i>实践基地</a>';
+  document.getElementById('myLink').outerHTML = '<span class="ro-tag">' + (isSchool ? '校级管理员' : '院级管理员') + '</span>';
+  document.getElementById('meBox').innerHTML = '<img src="' + img('team', 80, 80) + '" alt="头像">' + (isSchool ? '王建国' : '李敏');
+  document.getElementById('meBox').href = adminHome;
+  document.getElementById('aiCta').style.display = 'none';
+  document.getElementById('favBtn').style.display = 'none';
+  Object.assign(document.getElementById('detailBtn'), { href: adminBases, innerHTML: '<i data-lucide="layout-grid"></i>返回基地列表' });
+}
+
+// ========== 时钟 / 数字滚动 ==========
+function tick(){ const d = new Date(); document.getElementById('clock').textContent = d.toLocaleDateString('zh-CN') + ' ' + d.toTimeString().slice(0, 8); }
+tick(); setInterval(tick, 1000);
+document.querySelectorAll('[data-count]').forEach(el => {
+  const target = +el.dataset.count, unit = el.querySelector('small').outerHTML; let n = 0;
+  const step = () => { n = Math.min(target, n + Math.ceil(target / 40)); el.innerHTML = n.toLocaleString() + unit; if (n < target) requestAnimationFrame(step); };
+  step();
+});
+
+// ========== 左栏：专题图例 ==========
+const catCount = CATS.map((_, i) => BASES.filter(b => b.c === i).length);
+document.getElementById('cats').innerHTML = CATS.map((c, i) =>
+  `<div class="cat" data-i="${i}" style="--c:${c.color}"><i></i><span>${c.name}</span><em class="num">${catCount[i] * 8 + 3}</em></div>`).join('');
+document.getElementById('cats').addEventListener('click', e => {
+  const el = e.target.closest('.cat'); if (!el) return;
+  const i = +el.dataset.i; state.cats.has(i) ? state.cats.delete(i) : state.cats.add(i);
+  el.classList.toggle('on'); render();
+});
+function selectAll(){ state.cats.clear(); document.querySelectorAll('.cat').forEach(c => c.classList.remove('on')); render(); }
+document.getElementById('lvSeg').addEventListener('click', e => {
+  if (!e.target.matches('span')) return; document.querySelectorAll('#lvSeg span').forEach(s => s.classList.remove('on'));
+  e.target.classList.add('on'); state.lv = e.target.dataset.v; render();
+});
+document.getElementById('capSel').onchange = e => { state.cap = +e.target.value; render(); };
+
+// ========== 地图 ==========
+const chart = echarts.init(document.getElementById('map'));
+const provCount = {};
+BASES.forEach(b => provCount[b.prov] = (provCount[b.prov] || 0) + 1);
+
+function filtered(){
+  return BASES.filter(b => (!state.cats.size || state.cats.has(b.c)) && (!state.lv || b.lv === state.lv) && b.cap >= state.cap);
+}
+function render(){
+  const list = filtered();
+  document.getElementById('shown').textContent = list.length;
+  document.getElementById('selCount').textContent = state.cats.size ? state.cats.size + ' 类' : '全部';
+  chart.setOption({ series: [{ id: 'bases', data: list.map(b => ({ name: b.name, value: [b.lng, b.lat, b.cap], base: b, itemStyle: { color: CATS[b.c].color } })) }] });
+}
+chart.setOption({
+  tooltip: { trigger: 'item', backgroundColor: 'rgba(6,26,74,.92)', borderColor: '#3DD6FF', textStyle: { color: '#E6F0FF' },
+    formatter: p => p.data && p.data.base ? `<b>${p.data.base.name}</b><br/><span style="color:${CATS[p.data.base.c].color}">● </span>${CATS[p.data.base.c].name}<br/>${p.data.base.lv}基地 · ${p.data.base.prov}${p.data.base.city}` : `${p.name}：${provCount[p.name] || 0} 个基地` },
+  visualMap: { show: true, min: 0, max: 20, left: 16, bottom: 90, itemWidth: 10, itemHeight: 80, text: ['基地多', '少'], textStyle: { color: '#9FB7E6', fontSize: 11 }, inRange: { color: ['#123A8F', '#1E5BD8', '#3D8BFF'] }, seriesIndex: 0, calculable: false },
+  geo: { map: 'china', roam: true, zoom: 1.2, center: [104, 36], scaleLimit: { min: 1, max: 30 },
+    label: { show: false }, itemStyle: { areaColor: '#123A8F', borderColor: '#3DD6FF', borderWidth: .8, shadowColor: 'rgba(61,214,255,.4)', shadowBlur: 10 },
+    emphasis: { label: { show: true, color: '#fff' }, itemStyle: { areaColor: '#2B6CFF' } } },
+  series: [
+    { type: 'map', map: 'china', geoIndex: 0, data: Object.keys(provCount).map(k => ({ name: k, value: provCount[k] * 4 })) },
+    { id: 'bases', type: 'effectScatter', coordinateSystem: 'geo', symbolSize: v => 8 + v[2] / 12, rippleEffect: { scale: 3, brushType: 'stroke' },
+      itemStyle: { shadowBlur: 10, shadowColor: '#fff', borderColor: '#fff', borderWidth: 1 }, zlevel: 2, data: [] }
+  ]
+});
+render();
+chart.on('click', p => { if (p.data && p.data.base) openPop(p.data.base); });
+window.addEventListener('resize', () => chart.resize());
+
+const VIEWS = { 全国: { center: [104, 36], zoom: 1.2 }, 湖南: { center: [111.7, 27.6], zoom: 6 }, 长沙: { center: [112.98, 28.2], zoom: 22 } };
+function zoomTo(k){ chart.setOption({ geo: VIEWS[k] }); }
+function locate(b){ chart.setOption({ geo: { center: [b.lng, b.lat], zoom: 8 } }); setTimeout(() => openPop(b), 400); }
+
+// ========== 搜索：名称 / 地点 / 主题 ==========
+const kw = document.getElementById('kw'), sug = document.getElementById('suggest');
+function match(q){ return BASES.filter(b => (b.name + b.prov + b.city + CATS[b.c].name).includes(q)); }
+kw.addEventListener('input', () => {
+  const q = kw.value.trim(); if (!q) { sug.style.display = 'none'; return; }
+  const list = match(q).slice(0, 8);
+  sug.innerHTML = list.length ? list.map(b => `<div onclick="pick(${b.id})"><span>${b.name}</span><small>${b.prov}·${CATS[b.c].name}</small></div>`).join('') : '<div>未找到相关基地</div>';
+  sug.style.display = 'block';
+});
+kw.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+function pick(id){ sug.style.display = 'none'; const b = BASES.find(x => x.id === id); kw.value = b.name; locate(b); }
+function doSearch(){ const r = match(kw.value.trim()); sug.style.display = 'none'; if (r.length) locate(r[0]); }
+
+// ========== 弹窗 ==========
+function popCell(k, v, full){
+  return `<div${full ? ' class="full"' : ''}><span class="k">${k}</span><span class="v">${v}</span></div>`;
+}
+function openPop(b){
+  const c = CATS[b.c];
+  document.getElementById('pImg').src = img(b.img, 900, 360);
+  document.getElementById('pName').textContent = b.name;
+  document.getElementById('pTags').innerHTML = `<span class="ptag" style="--c:${c.color}">${c.name}</span><span class="ptag">${b.lv}基地</span>${b.col ? `<span class="ptag">${b.col}上报</span>` : ''}<span class="ptag">${b.prov} · ${b.city}</span>`;
+  const themes = (b.themes && b.themes.length) ? b.themes.join('、') : c.name;
+  document.getElementById('pGrid').innerHTML = [
+    popCell('基地编号', b.code || '—'),
+    popCell('牵头单位', b.lead || '—'),
+    popCell('共建单位', b.unit || '—'),
+    popCell('单位类型', b.unitType || '—'),
+    popCell('基地类型', b.baseType || '—'),
+    popCell('实践主题', themes),
+    popCell('岗位数量', `${b.cap} 人`),
+    popCell('是否授牌', b.awarded ? '是' : '否'),
+    popCell('联系人', `${b.contact || '—'} · <span class="num">${b.phone || '—'}</span>`),
+    popCell('开放时间', b.openTime || '—'),
+    popCell('地址', b.addr || b.region || '—', true)
+  ].join('');
+  document.getElementById('pIntro').textContent = b.intro || '';
+  shots = (b.photos && b.photos.length ? b.photos : [b.img, 'students', 'team']).slice();
+  document.getElementById('pImgs').innerHTML = shots.map((k, i) => `<img src="${img(k, 480, 300)}" alt="实景" onclick="openShot(${i})">`).join('');
+  const past = (b.caseIds || []).map(id => CASES.find(x => x.id === id)).filter(Boolean);
+  const shown = past.length ? past : CASES.filter(x => x.c === b.c).slice(0, 2);
+  document.getElementById('pPast').innerHTML = (shown.length ? shown : CASES.slice(0, 2)).map(x => `<div><span>${x.title}</span><small>${x.col.replace(/学院/, '**学院')} · ${x.year}</small></div>`).join('');
+  if (!isTeacher && !isAdmin) document.getElementById('detailBtn').href = 'base-detail.html?id=' + b.id;
+  document.getElementById('popMask').classList.add('show');
+  refreshIcons();
+}
+function closePop(){ document.getElementById('popMask').classList.remove('show'); closeShot(); }
+let shots = [], shotIdx = 0;
+function openShot(i){
+  shotIdx = i;
+  document.getElementById('vImg').src = img(shots[i], 1600, 1000);
+  document.getElementById('vCap').textContent = `实景图片 ${i + 1} / ${shots.length}`;
+  const single = shots.length < 2;
+  document.getElementById('shotPrev').style.display = single ? 'none' : '';
+  document.getElementById('shotNext').style.display = single ? 'none' : '';
+  document.getElementById('viewer').classList.add('show');
+  refreshIcons();
+}
+function stepShot(d){ if (shots.length > 1) openShot((shotIdx + d + shots.length) % shots.length); }
+function closeShot(){ document.getElementById('viewer').classList.remove('show'); }
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('viewer').classList.contains('show')) return;
+  if (e.key === 'Escape') closeShot();
+  if (e.key === 'ArrowLeft') stepShot(-1);
+  if (e.key === 'ArrowRight') stepShot(1);
+});
+
+// ========== 右栏 ==========
+const rankRows = CASES.map((c, i) => `<tr onclick="location.href='case-detail.html?id=${c.id}'"><td style="width:36px"><span class="rank-no ${i < 3 ? 'top' : ''}">${i + 1}</span></td><td>${c.title}</td><td style="width:86px;color:#9FB7E6">${c.col}</td></tr>`).join('');
+document.getElementById('caseRank').innerHTML = rankRows + rankRows;
+const hot = [...BASES].sort((a, b) => b.persons - a.persons).slice(0, 6);
+// AI 推荐页「定位地图」跳转：map.html?locate=基地ID
+const locateId = +new URLSearchParams(location.search).get('locate');
+if (locateId) setTimeout(() => locate(BASES.find(b => b.id === locateId)), 600);
+document.getElementById('hotList').innerHTML = hot.map((b, i) => `<div class="hot-item" onclick='locate(BASES.find(x=>x.id===${b.id}))'><span class="rank-no ${i < 3 ? 'top' : ''}">${i + 1}</span><span class="nm">${b.name}</span><span class="vv num">${b.persons}人次</span><div class="bar"><i style="width:${b.persons / hot[0].persons * 100}%"></i></div></div>`).join('');
+refreshIcons();
+</script>
+</body>
+</html>

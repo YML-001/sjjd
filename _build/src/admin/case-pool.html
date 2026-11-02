@@ -1,0 +1,84 @@
+---
+title: 案例候选池
+layout: admin
+menu: case-pool
+crumb: 社会实践基地资源库 / 优秀案例 / 案例候选池
+inject: data
+---
+<style>
+.flow{display:flex;align-items:center;gap:10px;padding:14px 18px;border-radius:12px;background:#fff;border:1px solid #ECEEF2;margin-bottom:16px;font-size:13px}
+.flow span{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#F7F9FC}
+.flow span.on{background:var(--primary-l);color:var(--primary);font-weight:600}
+.flow svg.arr{color:#CBD5E1}
+.src{font-size:12px;padding:1px 8px;border-radius:4px}
+.src.auto{background:#EEF2FF;color:#4F46E5}
+.src.rec{background:#F3E8FF;color:#7C3AED}
+</style>
+
+<div class="page-hd">
+  <div><h1>案例候选池</h1><p>系统每日自动抓取第二课堂「已结项 + 已评优」项目进入候选池；院级管理员推荐本院优质项目，校级管理员终审入库</p></div>
+  <div class="actions"><button class="btn" onclick="toast('已从第二课堂同步最新项目，新增 3 条')"><i data-lucide="refresh-cw"></i>立即同步</button></div>
+</div>
+
+<div class="flow">
+  <span><i data-lucide="database"></i>第二课堂已结项 / 已评优项目</span><i data-lucide="arrow-right" class="arr"></i>
+  <span class="on"><i data-lucide="inbox"></i>候选池（自动抓取 + 院级推荐）</span><i data-lucide="arrow-right" class="arr"></i>
+  <span><i data-lucide="shield-check"></i>校级终审</span><i data-lucide="arrow-right" class="arr"></i>
+  <span><i data-lucide="award"></i>优秀案例库</span>
+  <span style="margin-left:auto;background:none" class="muted">遴选、审核、下架操作日志完整留存</span>
+</div>
+
+<div class="card">
+  <div class="card-hd">
+    <div class="chips" data-chips="single"><span class="chip on">全部 <b>28</b></span><span class="chip">待推荐</span><span class="chip">待终审</span><span class="chip">已入库</span><span class="chip">未通过</span></div>
+    <div class="filter-bar">
+      <select class="select"><option>全部来源</option><option>系统抓取</option><option>院级推荐</option></select>
+      <select class="select" data-only="school"><option>全部学院</option><option>计算机学院</option><option>机械工程学院</option></select>
+      <div class="input-ic" style="width:220px"><i data-lucide="search"></i><input class="input" placeholder="搜索项目名称"></div>
+    </div>
+  </div>
+  <table class="table">
+    <thead><tr><th>项目名称</th><th>学院</th><th>实践主题</th><th>评优等级</th><th>来源</th><th>结项时间</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<div class="modal-mask" id="recM">
+  <div class="modal">
+    <div class="modal-hd">推荐进入优秀案例库<span class="x" onclick="closeModal('recM')"><i data-lucide="x"></i></span></div>
+    <div class="modal-bd">
+      <div class="field mb-16"><label><span class="req">*</span>推荐理由</label><textarea class="textarea">项目成果突出，形成可复制的科普模式，获市级媒体报道，建议入库。</textarea></div>
+      <div class="field"><label>推荐亮点标签</label><div class="chips" data-chips="multi"><span class="chip on">成果转化</span><span class="chip">媒体报道</span><span class="chip on">模式可复制</span><span class="chip">跨学科</span></div></div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('recM')">取消</button><button class="btn btn-primary" onclick="closeModal('recM');toast('已推荐，等待校级终审')">提交推荐</button></div>
+  </div>
+</div>
+
+<script>
+const isSchool = document.documentElement.dataset.role === 'school';
+// [名称, 学院, 主题, 主题色, 评优, 来源, 结项, 状态]
+const DATA = [
+  ['算力强国：超算中心科普进中小学', '计算机学院', '攀高攻坚', '#0891B2', '校级优秀', 'auto', '2026-09', '待推荐'],
+  ['鸿蒙生态开发者社区服务实践', '计算机学院', '行业认知', '#0EA5E9', '院级优秀', 'auto', '2026-09', '待推荐'],
+  ['走进“灯塔工厂”：智能制造人才需求调研', '机械工程学院', '大国重器', '#2563EB', '校级优秀', 'rec', '2026-09', '待终审'],
+  ['十八洞村精准扶贫十年回访与产业振兴调研', '经济管理学院', '脱贫攻坚乡村振兴', '#16A34A', '国家级立项', 'auto', '2026-09', '待终审'],
+  ['社区“银龄”健康守护志愿服务', '医学院', '健康中国', '#14B8A6', '校级优秀', 'rec', '2026-08', '待终审'],
+  ['AI 助力湘西非遗数字化保护', '计算机学院', '中华优秀传统文化', '#D97706', '校级优秀', 'rec', '2026-08', '已入库'],
+  ['基层治理“微网格”运行机制调研', '公共管理学院', '基层治理', '#CA8A04', '院级优秀', 'auto', '2026-08', '未通过']
+];
+const ST = { '待推荐': 's-info', '待终审': 's-pending', '已入库': 's-pass', '未通过': 's-cancel' };
+const scoped = DATA.filter(r => isSchool || r[1] === '计算机学院');
+function reviewHref(title){
+  const hit = CASES.find(x => x.title === title);
+  return hit ? 'case-review.html?id=' + hit.id : 'case-review.html';
+}
+function op(r){
+  const href = reviewHref(r[0]);
+  if (isSchool) return r[7] === '待终审' ? `<a class="btn btn-sm btn-primary" href="${href}">终审</a>` : r[7] === '待推荐' ? `<a class="btn-text" href="${href}">直接终审</a>` : `<a class="btn-text" href="${href}">查看</a>`;
+  return r[7] === '待推荐' ? `<button class="btn btn-sm btn-primary" onclick="openModal('recM')">推荐入库</button>` : `<a class="btn-text" href="${href}">查看</a>`;
+}
+document.getElementById('rows').innerHTML = scoped.map(r => `<tr>
+  <td><b style="font-weight:500">${r[0]}</b></td><td>${r[1]}</td><td><span class="tag tag-c" style="--c:${r[3]}">${r[2]}</span></td>
+  <td>${r[4]}</td><td><span class="src ${r[5]}">${r[5] === 'auto' ? '系统抓取' : '院级推荐'}</span></td><td class="num muted">${r[6]}</td>
+  <td><span class="status ${ST[r[7]]}">${r[7]}</span></td><td>${op(r)}</td></tr>`).join('');
+</script>

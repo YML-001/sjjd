@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据可视化看板 - 社会实践基地资源库（管理后台）</title>
+<script>
+(function(){
+  var p = new URLSearchParams(location.search).get('role');
+  if (p) localStorage.setItem('sjjd-role', p);
+  document.documentElement.dataset.role = localStorage.getItem('sjjd-role') || 'school';
+  document.addEventListener('DOMContentLoaded', function(){
+    var role = document.documentElement.dataset.role;
+    document.querySelectorAll('a[href*="from=admin"]').forEach(function(a){
+      var href = a.getAttribute('href');
+      if (href.indexOf('role=') === -1) a.setAttribute('href', href + '&role=' + encodeURIComponent(role));
+    });
+  });
+})();
+function switchRole(r){ localStorage.setItem('sjjd-role', r); location.href = location.pathname; }
+</script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+/* ========== 设计令牌 ========== */
+:root{
+  --primary:#2563EB;--primary-d:#1D4ED8;--primary-l:#EFF4FF;--navy:#0F2A6B;
+  --red:#C8102E;--red-l:#FDEDEF;--success:#16A34A;--success-l:#EAF7EE;
+  --warning:#D97706;--warning-l:#FEF4E4;--danger:#DC2626;--danger-l:#FDECEC;
+  --text:#1F2937;--text-2:#4B5563;--text-3:#9CA3AF;--border:#E5E7EB;--line:#F0F1F4;
+  --bg:#F4F6FA;--radius:10px;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.05);
+  --shadow-lg:0 16px 40px rgba(16,24,40,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;font-size:14px;color:var(--text);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%;object-fit:cover}
+button,input,select,textarea{font:inherit;color:inherit}
+svg.lucide{width:16px;height:16px;stroke-width:2;flex-shrink:0}
+.num{font-family:"DIN Alternate","Bahnschrift","Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums}
+html[data-role=college] [data-only=school],html[data-role=school] [data-only=college]{display:none!important}
+
+/* ========== 学生端门户布局 ========== */
+.wrap{width:1240px;max-width:calc(100% - 48px);margin:0 auto}
+.portal-hd{background:linear-gradient(90deg,#0F2A6B,#1E4FD8);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(15,42,107,.25)}
+.portal-hd-in{height:64px;display:flex;align-items:center;gap:32px}
+.logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.logo-ic{width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.16);display:grid;place-items:center}
+.logo-ic svg.lucide{width:20px;height:20px}
+.logo b{display:block;font-size:15px;letter-spacing:.5px}
+.logo small{display:block;font-size:12px;opacity:.75;margin-top:-2px}
+.portal-nav{display:flex;gap:4px;flex:1}
+.portal-nav a{padding:6px 12px;border-radius:6px;opacity:.85;transition:.2s;font-size:14px;white-space:nowrap}
+.portal-nav a:hover{opacity:1;background:rgba(255,255,255,.1)}
+.portal-nav a.on{opacity:1;background:rgba(255,255,255,.18);font-weight:600}
+.portal-user,.admin-hd-r{display:flex;align-items:center;gap:14px}
+.hd-ic{position:relative;width:34px;height:34px;display:grid;place-items:center;border-radius:8px;transition:.2s}
+.hd-ic:hover{background:rgba(255,255,255,.12)}
+.hd-ic.on,.hd-ic.on:hover{background:rgba(255,255,255,.2)}
+.hd-ic svg.lucide{width:18px;height:18px}
+.hd-ic em{position:absolute;top:2px;right:0;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#F43F5E;font-size:11px;font-style:normal;line-height:16px;text-align:center}
+.hd-me{display:flex;align-items:center;gap:8px;padding:4px 8px 4px 4px;border-radius:20px;transition:.2s}
+.hd-me:hover,.hd-me.on{background:rgba(255,255,255,.12)}
+.hd-me img{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.5)}
+.hd-me span{font-size:13px;line-height:1.25}
+.hd-me small{display:block;font-size:11px;opacity:.7}
+.portal-main{padding:20px 0 48px;min-height:calc(100vh - 120px)}
+.portal-ft{text-align:center;color:var(--text-3);font-size:12px;padding:20px 0 28px}
+
+/* ========== 管理端布局 ========== */
+.admin-hd{position:fixed;top:0;left:0;right:0;height:56px;background:linear-gradient(90deg,#0B2259,#163E9E);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:60}
+.role-switch{display:flex;align-items:center;gap:6px;font-size:13px;background:rgba(255,255,255,.1);padding:4px 6px 4px 10px;border-radius:8px}
+.role-switch select{background:#fff;color:var(--text);border:none;border-radius:6px;height:26px;padding:0 6px;cursor:pointer;outline:none}
+.ro-badge{display:flex;align-items:center;gap:6px;font-size:12px;background:rgba(255,255,255,.14);padding:4px 10px;border-radius:12px}
+.side{position:fixed;top:56px;left:0;bottom:0;width:220px;background:#fff;border-right:1px solid var(--border);padding:12px 10px;overflow-y:auto;z-index:40}
+.side-group{font-size:12px;color:var(--text-3);padding:14px 12px 6px}
+.side a{display:flex;align-items:center;gap:10px;height:38px;padding:0 12px;border-radius:8px;color:var(--text-2);transition:.15s;margin-bottom:2px}
+.side a:hover{background:#F3F5F9;color:var(--text)}
+.side a.on{background:var(--primary-l);color:var(--primary);font-weight:600}
+.side a span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lock-tag{display:none;font-style:normal;font-size:11px;color:var(--text-3);background:#F3F4F6;border-radius:4px;padding:0 5px}
+html[data-role=college] .side a[data-lock]{color:var(--text-3)}
+html[data-role=college] .lock-tag{display:inline}
+.admin-main{margin-left:220px;padding:76px 24px 40px;min-height:100vh}
+
+/* ========== 通用：面包屑 / 页头 ========== */
+.crumb{display:flex;align-items:center;gap:6px;color:var(--text-3);font-size:13px;margin-bottom:14px}
+.crumb svg.lucide{width:13px;height:13px}
+.crumb b{color:var(--text-2);font-weight:500}
+.page-hd{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px}
+.page-hd h1{font-size:22px;font-weight:600;line-height:1.3}
+.page-hd p{color:var(--text-3);margin-top:4px;font-size:13px}
+.page-hd .actions{display:flex;gap:10px}
+
+/* ========== 按钮 ========== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 14px;border-radius:7px;border:1px solid var(--border);background:#fff;color:var(--text-2);cursor:pointer;transition:.2s;white-space:nowrap;font-size:14px}
+.btn:hover{border-color:var(--primary);color:var(--primary)}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-d);color:#fff}
+.btn-red{background:var(--red);border-color:var(--red);color:#fff}
+.btn-red:hover{background:#A50D25;border-color:#A50D25;color:#fff}
+.btn-danger{color:var(--danger);border-color:#F7C9C9}
+.btn-danger:hover{background:var(--danger-l);border-color:var(--danger);color:var(--danger)}
+.btn-success{background:var(--success);border-color:var(--success);color:#fff}
+.btn-success:hover{background:#12813B;color:#fff}
+.btn-text{border:none;background:none;height:auto;padding:0;color:var(--primary)}
+.btn-text:hover{color:var(--primary-d);text-decoration:underline}
+.btn-text.danger{color:var(--danger)}
+.btn-sm{height:28px;padding:0 10px;font-size:13px}
+.btn-lg{height:42px;padding:0 22px;font-size:15px}
+.btn[disabled],.btn.disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+
+/* ========== 卡片 ========== */
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid #ECEEF2}
+.card-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.card-hd h3{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card-hd h3::before{content:"";width:3px;height:14px;background:var(--primary);border-radius:2px}
+.card-hd .more{font-size:13px;color:var(--text-3);display:flex;align-items:center;gap:2px}
+.card-hd .more:hover{color:var(--primary)}
+.card-bd{padding:20px}
+
+/* ========== 标签 / 状态 ========== */
+.tag{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:5px;font-size:12px;background:#F3F4F6;color:var(--text-2);white-space:nowrap}
+.tag svg.lucide{width:12px;height:12px}
+.tag-c{color:var(--c);background:color-mix(in srgb,var(--c) 10%,#fff)}
+.tag-blue{background:var(--primary-l);color:var(--primary)}
+.tag-red{background:var(--red-l);color:var(--red)}
+.tag-green{background:var(--success-l);color:var(--success)}
+.tag-orange{background:var(--warning-l);color:var(--warning)}
+.tag-gray{background:#F3F4F6;color:var(--text-3)}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.s-pending{color:var(--warning)}.s-pass{color:var(--success)}.s-reject{color:var(--danger)}.s-cancel{color:var(--text-3)}.s-info{color:var(--primary)}
+
+/* ========== 表格 ========== */
+.table{width:100%;border-collapse:collapse}
+.table th{background:#F8FAFC;color:var(--text-2);font-weight:500;text-align:left;padding:11px 14px;font-size:13px;border-bottom:1px solid var(--border);white-space:nowrap}
+.table td{padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.table tr:hover td{background:#FAFBFE}
+.table .r{text-align:right}
+.table .ops{display:flex;gap:14px;white-space:nowrap}
+.cell-main{display:flex;align-items:center;gap:12px}
+.cell-main img{width:56px;height:40px;border-radius:6px}
+.cell-main b{font-weight:500;display:block}
+.cell-main small{color:var(--text-3);font-size:12px}
+
+/* ========== 表单 ========== */
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px 28px}
+.span-2{grid-column:span 2}
+.field label{display:block;font-size:13px;color:var(--text-2);margin-bottom:6px;font-weight:500}
+.req{color:var(--danger);margin-right:2px}
+.input,.select,.textarea{width:100%;height:36px;border:1px solid #D7DCE3;border-radius:7px;padding:0 12px;background:#fff;outline:none;transition:.2s}
+.textarea{height:auto;min-height:96px;padding:8px 12px;resize:vertical;line-height:1.7}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.hint{font-size:12px;color:var(--text-3);margin-top:4px}
+.input-ic{position:relative}
+.input-ic svg.lucide{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-3)}
+.input-ic .input{padding-left:34px}
+.switch{position:relative;width:38px;height:22px;border-radius:11px;background:#D1D5DB;cursor:pointer;transition:.2s;display:inline-block;flex-shrink:0;border:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.switch.on{background:var(--primary)}
+.switch.on::after{left:19px}
+.radio-group{display:flex;gap:20px;height:36px;align-items:center}
+.radio-group label{display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;font-weight:400;color:var(--text)}
+.upload{border:1px dashed #C9D1DC;border-radius:8px;padding:18px;text-align:center;color:var(--text-3);font-size:13px;cursor:pointer;transition:.2s;background:#FAFBFC}
+.upload:hover{border-color:var(--primary);color:var(--primary)}
+
+/* ========== 筛选 ========== */
+.filter-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.filter-bar .select,.filter-bar .input{width:160px}
+.filter-row{display:flex;gap:16px;align-items:flex-start;padding:10px 0}
+.filter-row+.filter-row{border-top:1px dashed var(--line)}
+.filter-row>.k{width:76px;flex-shrink:0;color:var(--text-3);font-size:13px;line-height:28px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 12px;border-radius:14px;border:1px solid var(--border);background:#fff;font-size:13px;cursor:pointer;transition:.2s;color:var(--text-2);white-space:nowrap}
+.chip:hover{border-color:var(--primary);color:var(--primary)}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.chip i.dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+
+/* ========== Tabs ========== */
+.tabs{display:flex;gap:28px;border-bottom:1px solid var(--border);margin-bottom:18px}
+.tabs a{padding:10px 0;color:var(--text-2);position:relative;font-size:15px;display:flex;align-items:center;gap:6px}
+.tabs a:hover{color:var(--primary)}
+.tabs a.on{color:var(--primary);font-weight:600}
+.tabs a.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--primary);border-radius:1px}
+.tabs .cnt{font-size:12px;background:#F1F3F6;color:var(--text-3);border-radius:9px;padding:0 7px;font-weight:400}
+.tabs a.on .cnt{background:var(--primary-l);color:var(--primary)}
+
+/* ========== 统计卡 ========== */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat{background:#fff;border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);border:1px solid #ECEEF2;display:flex;gap:14px;align-items:center}
+.stat .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:var(--primary-l);color:var(--primary);flex-shrink:0}
+.stat .ic svg.lucide{width:22px;height:22px}
+.stat .v{font-size:26px;font-weight:700;line-height:1.2}
+.stat .v small{font-size:13px;font-weight:400;color:var(--text-3);margin-left:2px}
+.stat .l{color:var(--text-3);font-size:13px}
+.stat .trend{font-size:12px;color:var(--success)}
+.stat .trend.down{color:var(--danger)}
+
+/* ========== 分页 ========== */
+.pager{display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:18px;color:var(--text-3);font-size:13px}
+.pager a{min-width:30px;height:30px;padding:0 6px;display:grid;place-items:center;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text-2);transition:.2s}
+.pager a:hover{border-color:var(--primary);color:var(--primary)}
+.pager a.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.pager .total{margin-right:auto}
+
+/* ========== 弹窗 ========== */
+.modal-mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(2px)}
+.modal-mask.show{display:flex}
+.modal{background:#fff;border-radius:14px;width:520px;max-width:92vw;max-height:88vh;overflow:auto;box-shadow:var(--shadow-lg);animation:pop .22s ease-out}
+.modal-hd{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:16px}
+.modal-hd .x{cursor:pointer;color:var(--text-3)}
+.modal-bd{padding:20px}
+.modal-ft{padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+@keyframes pop{from{transform:translateY(8px) scale(.98);opacity:0}}
+
+/* ========== 时间线 ========== */
+.timeline{position:relative;padding-left:24px}
+.tl-item{position:relative;padding-bottom:22px}
+.tl-item::before{content:"";position:absolute;left:-20px;top:5px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--primary);box-sizing:border-box;z-index:1}
+.tl-item::after{content:"";position:absolute;left:-15px;top:17px;bottom:-5px;width:2px;background:#E5E7EB}
+.tl-item:last-child{padding-bottom:0}
+.tl-item:last-child::after{display:none}
+.tl-item.done::before{background:var(--primary)}
+.tl-item.ok::before{background:var(--success);border-color:var(--success)}
+.tl-item.bad::before{background:var(--danger);border-color:var(--danger)}
+.tl-item.wait::before{border-color:#D1D5DB}
+.tl-item .t{font-weight:500}
+.tl-item .d{color:var(--text-3);font-size:12px}
+.tl-item .note{margin-top:6px;background:#F8FAFC;border-radius:6px;padding:8px 12px;color:var(--text-2);font-size:13px}
+
+/* ========== 提示条 ========== */
+.alert{position:relative;display:block;padding:11px 16px 11px 40px;border-radius:8px;font-size:13px;line-height:1.7}
+.alert svg.lucide{position:absolute;left:15px;top:14px}
+.alert-info{background:var(--primary-l);color:#1E40AF}
+.alert-warn{background:var(--warning-l);color:#92400E}
+.alert-danger{background:var(--danger-l);color:#991B1B}
+.alert-success{background:var(--success-l);color:#166534}
+
+/* ========== 描述列表 ========== */
+.desc{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 32px}
+.desc>div{display:flex;gap:12px;font-size:14px}
+.desc .k{color:var(--text-3);width:84px;flex-shrink:0}
+.desc .full{grid-column:span 2}
+
+/* ========== 无权限 / 空状态 ========== */
+.no-perm{text-align:center;padding:80px 20px}
+.no-perm-ic{width:72px;height:72px;margin:0 auto 18px;border-radius:50%;background:#F3F4F6;display:grid;place-items:center;color:var(--text-3)}
+.no-perm-ic svg.lucide{width:32px;height:32px}
+.no-perm h3{font-size:18px;margin-bottom:6px}
+.no-perm p{color:var(--text-3);margin-bottom:22px}
+.empty{text-align:center;padding:60px 20px;color:var(--text-3)}
+
+/* ========== 进度条 ========== */
+.bar{height:8px;border-radius:4px;background:#EEF1F5;overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:4px;background:var(--primary)}
+
+/* ========== 轻提示 / 原型导航按钮 ========== */
+.toast{position:fixed;top:24px;left:50%;transform:translate(-50%,-16px);background:#111827;color:#fff;padding:10px 18px;border-radius:8px;opacity:0;transition:.25s;z-index:300;display:flex;gap:8px;align-items:center;font-size:14px;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.proto-back{position:fixed;right:20px;bottom:20px;z-index:90;display:flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:18px;background:rgba(17,24,39,.82);color:#fff;font-size:13px;box-shadow:var(--shadow-lg);transition:.2s}
+.proto-back:hover{background:#111827;transform:translateY(-2px)}
+
+/* ========== 工具类 ========== */
+.flex{display:flex;align-items:center}
+.between{justify-content:space-between}
+.wrap-f{flex-wrap:wrap}
+.gap-4{gap:4px}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}.gap-24{gap:24px}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mt-24{margin-top:24px}
+.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.muted{color:var(--text-3)}
+.small{font-size:12px}
+.strong{font-weight:600}
+.ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.c-primary{color:var(--primary)}.c-red{color:var(--red)}.c-success{color:var(--success)}.c-warning{color:var(--warning)}.c-danger{color:var(--danger)}
+
+/* ---------- 页面私有样式 ---------- */
+
+.kpi6{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:16px}
+.kpi6 .stat{flex-direction:column;align-items:flex-start;gap:6px;padding:16px 18px}
+.kpi6 .stat .v{font-size:24px}
+.dim{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;margin:22px 0 12px}
+.dim span{font-size:12px;font-weight:400;color:var(--text-3)}
+.dim i.bar{width:4px;height:16px;border-radius:2px;background:var(--primary)}
+.chart{height:280px}
+.scope{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:12px;background:var(--primary-l);color:var(--primary)}
+
+</style>
+<script>
+// 公共脚本：图标渲染、轻提示、弹窗、筛选标签切换
+function refreshIcons(){ window.lucide && lucide.createIcons(); }
+function toast(msg, icon){
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = '<i data-lucide="' + (icon || 'check-circle-2') + '"></i>' + msg;
+  document.body.appendChild(t); refreshIcons();
+  requestAnimationFrame(function(){ t.classList.add('show'); });
+  setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); }, 300); }, 2000);
+}
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+document.addEventListener('click', function(e){
+  var chip = e.target.closest('[data-chips] .chip');
+  if (chip) {
+    var group = chip.parentElement;
+    if (group.dataset.chips === 'single') group.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+    chip.classList.toggle('on');
+  }
+  if (e.target.classList.contains('modal-mask')) e.target.classList.remove('show');
+});
+document.addEventListener('DOMContentLoaded', refreshIcons);
+</script>
+
+</head>
+<body class="admin">
+
+<header class="admin-hd">
+  <a class="logo" href="dashboard.html"><span class="logo-ic"><i data-lucide="graduation-cap"></i></span><span><b>中南大学学工管理系统</b><small>社会实践基地资源库 · 管理后台</small></span></a>
+  <div class="admin-hd-r">
+    <label class="role-switch"><i data-lucide="repeat"></i>演示角色
+  <select onchange="switchRole(this.value)">
+    <option value="school">校级管理员</option><option value="college">院级管理员</option>
+  </select></label>
+    <a class="hd-ic" href="#" title="消息"><i data-lucide="bell"></i><em>5</em></a>
+    <div class="hd-me"><img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=80&h=80" alt="头像"><span data-only="school">王建国<small>校级管理员 · 校团委</small></span><span data-only="college">李敏<small>院级管理员 · 计算机学院</small></span></div>
+  </div>
+</header>
+<aside class="side"><a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span>工作台</span></a>
+<div class="side-group">基地管理</div>
+<a href="../student/map.html?from=admin"><i data-lucide="map"></i><span>数字地图</span></a>
+<a href="bases.html"><i data-lucide="map-pinned"></i><span>实践基地管理</span></a>
+<a href="base-reports.html"><i data-lucide="file-check-2"></i><span>基地上报审核</span></a>
+<div class="side-group">资源配置</div>
+<a href="tags.html" data-lock><i data-lucide="tags"></i><span>专题标签库</span><em class="lock-tag">仅校级</em></a>
+<a href="ranking-config.html" data-lock><i data-lucide="trophy"></i><span>榜单配置</span><em class="lock-tag">仅校级</em></a>
+<div class="side-group">优秀案例</div>
+<a href="case-pool.html"><i data-lucide="inbox"></i><span>案例候选池</span></a>
+<a href="case-library.html"><i data-lucide="award"></i><span>优秀案例库</span></a>
+<div class="side-group">数据分析</div>
+<a href="data-board.html" class="on"><i data-lucide="bar-chart-3"></i><span>数据可视化看板</span></a>
+<a href="ai-insight.html" data-lock><i data-lucide="sparkles"></i><span>AI 数据洞察</span><em class="lock-tag">仅校级</em></a>
+<div class="side-group">AI 智能匹配</div>
+<a href="ai-weights.html" data-lock><i data-lucide="sliders-horizontal"></i><span>因子权重配置</span><em class="lock-tag">仅校级</em></a>
+<a href="ai-effect.html" data-lock><i data-lucide="activity"></i><span>推荐效果数据</span><em class="lock-tag">仅校级</em></a>
+<a href="ai-blacklist.html" data-lock><i data-lucide="ban"></i><span>推荐黑名单</span><em class="lock-tag">仅校级</em></a>
+<div class="side-group">系统</div>
+<a href="operation-logs.html"><i data-lucide="scroll-text"></i><span>操作日志</span></a>
+<a href="second-classroom.html"><i data-lucide="external-link"></i><span>第二课堂联动</span></a></aside>
+<main class="admin-main">
+<div class="crumb"><span>社会实践基地资源库</span><i data-lucide="chevron-right"></i><span>数据分析</span><i data-lucide="chevron-right"></i><b>数据可视化看板</b></div>
+<div class="page-hd">
+  <div><h1>数据可视化看板</h1><p>数据来源第二课堂社会实践库，每日 02:00 同步 · <span class="scope" data-only="school"><i data-lucide="globe"></i>全校数据</span><span class="scope" data-only="college"><i data-lucide="building-2"></i>仅本院数据（计算机学院）</span></p></div>
+  <div class="actions">
+    <select class="select" style="width:140px"><option>2025-2026 学年</option><option>2024-2025 学年</option></select>
+    <select class="select" style="width:120px"><option>全学年</option><option>秋季学期</option><option>春季学期</option></select>
+    <select class="select" style="width:140px" data-only="school"><option>全部学院</option><option>计算机学院</option><option>机械工程学院</option></select>
+    <select class="select" style="width:140px" data-only="college" disabled><option>计算机学院</option></select>
+    <button class="btn btn-primary" onclick="toast(document.documentElement.dataset.role==='school'?'正在导出全校报表 Excel':'正在导出本院报表 Excel')"><i data-lucide="file-spreadsheet"></i>导出 Excel</button>
+  </div>
+</div>
+
+<div class="kpi6" id="kpis"></div>
+
+<div class="dim"><i class="bar"></i>基地维度<span>基地实践人次分布、结项完成率、基地主题分布</span></div>
+<div class="grid-3">
+  <div class="card"><div class="card-hd"><h3>基地实践人次 TOP 8</h3></div><div class="card-bd"><div class="chart" id="c1"></div></div></div>
+  <div class="card"><div class="card-hd"><h3>结项完成率</h3></div><div class="card-bd"><div class="chart" id="c2"></div></div></div>
+  <div class="card"><div class="card-hd"><h3>基地主题分布</h3></div><div class="card-bd"><div class="chart" id="c3"></div></div></div>
+</div>
+
+<div class="dim"><i class="bar"></i>学院维度<span>学生参与率、实践时长统计、案例产出数量</span></div>
+<div class="grid-2">
+  <div class="card"><div class="card-hd"><h3>各学院学生参与率与实践时长</h3></div><div class="card-bd"><div class="chart" id="c4"></div></div></div>
+  <div class="card"><div class="card-hd"><h3>各学院优秀案例产出</h3></div><div class="card-bd"><div class="chart" id="c5"></div></div></div>
+</div>
+
+<div class="dim"><i class="bar"></i>案例维度与时间趋势<span>案例浏览热度排行、实践主题分布、按月实践人次与立项数</span></div>
+<div class="grid-3">
+  <div class="card"><div class="card-hd"><h3>案例浏览热度 TOP 6</h3></div><div class="card-bd"><div class="chart" id="c6"></div></div></div>
+  <div class="card"><div class="card-hd"><h3>实践主题分布</h3></div><div class="card-bd"><div class="chart" id="c7"></div></div></div>
+  <div class="card"><div class="card-hd"><h3>按月实践人次与立项数</h3></div><div class="card-bd"><div class="chart" id="c8"></div></div></div>
+</div>
+
+<script>
+const isSchool = document.documentElement.dataset.role === 'school';
+const K = [
+  ['参与学院数', isSchool ? '27' : '1', '个', 'building-2', '#2563EB'], ['学生覆盖率', isSchool ? '68.4' : '74.2', '%', 'users', '#16A34A'],
+  ['基地总数', isSchool ? '286' : '18', '个', 'map-pinned', '#7C3AED'], ['参与团队数', isSchool ? '312' : '36', '个', 'users', '#D97706'],
+  ['立项项目总数', isSchool ? '1,286' : '142', '项', 'folder-check', '#0891B2'], ['优秀案例数', isSchool ? '312' : '28', '个', 'award', '#C8102E']
+];
+document.getElementById('kpis').innerHTML = K.map(k => `<div class="stat"><span class="flex gap-8 l"><i data-lucide="${k[3]}" style="color:${k[4]}"></i>${k[0]}</span><div class="v num">${k[1]}<small>${k[2]}</small></div><span class="trend">较上学年 ↑ ${(Math.random() * 10 + 2).toFixed(1)}%</span></div>`).join('');
+
+const C = ['#2563EB', '#16A34A', '#F59E0B', '#C8102E', '#7C3AED', '#0891B2', '#F97316', '#14B8A6'];
+const axis = { axisLine: { lineStyle: { color: '#CBD5E1' } }, axisLabel: { color: '#64748B', fontSize: 11 }, splitLine: { lineStyle: { color: '#F1F5F9' } } };
+const chart = (id, opt) => echarts.init(document.getElementById(id)).setOption(Object.assign({ color: C, tooltip: {} }, opt));
+const s = isSchool ? 1 : 0.15;
+
+chart('c1', { grid: { left: 110, right: 20, top: 10, bottom: 20 }, tooltip: { trigger: 'axis' },
+  xAxis: { type: 'value', ...axis }, yAxis: { type: 'category', ...axis, data: ['延安革命纪念馆', '嘉兴南湖纪念馆', '十八洞村', '岳麓山·橘子洲', '袁隆平水稻中心', '雷锋纪念馆', '湖南省博物馆', '韶山纪念馆'] },
+  series: [{ type: 'bar', barWidth: 12, data: [620, 680, 760, 860, 880, 980, 1050, 1260].map(v => Math.round(v * s)), itemStyle: { borderRadius: [0, 6, 6, 0], color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#93C5FD' }, { offset: 1, color: '#2563EB' }]) } }] });
+chart('c2', { series: [{ type: 'gauge', startAngle: 210, endAngle: -30, progress: { show: true, width: 16, itemStyle: { color: '#16A34A' } }, axisLine: { lineStyle: { width: 16 } }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, pointer: { show: false },
+  detail: { formatter: '{value}%', fontSize: 30, offsetCenter: [0, 0], color: '#111827' }, title: { offsetCenter: [0, '32%'], color: '#64748B' }, data: [{ value: isSchool ? 76.2 : 76.1, name: isSchool ? '已结项 980 / 立项 1,286' : '已结项 108 / 立项 142' }] }] });
+chart('c3', { tooltip: { trigger: 'item' }, legend: { type: 'scroll', bottom: 0, textStyle: { fontSize: 11 } },
+  series: [{ type: 'pie', radius: ['42%', '68%'], center: ['50%', '44%'], itemStyle: { borderColor: '#fff', borderWidth: 2 }, label: { show: false },
+    data: [['革命文化', 46], ['乡村振兴', 42], ['大国重器', 35], ['传统文化', 31], ['绿色发展', 26], ['科学家精神', 22], ['其他', 84]].map(d => ({ name: d[0], value: d[1] })) }] });
+const cols = ['计算机', '机械', '马院', '经管', '法学', '医学', '公管', '文学'];
+chart('c4', { tooltip: { trigger: 'axis' }, legend: { right: 0, top: 0 }, grid: { left: 44, right: 44, top: 36, bottom: 24 },
+  xAxis: { type: 'category', ...axis, data: cols }, yAxis: [{ type: 'value', name: '参与率%', ...axis, max: 100 }, { type: 'value', name: '时长(h)', ...axis, splitLine: { show: false } }],
+  series: [{ name: '学生参与率', type: 'bar', barWidth: 16, data: [74, 69, 82, 63, 58, 71, 66, 60], itemStyle: { borderRadius: [4, 4, 0, 0] } },
+    { name: '人均实践时长', type: 'line', yAxisIndex: 1, smooth: true, data: [32, 36, 41, 28, 26, 38, 30, 27], itemStyle: { color: '#F97316' } }] });
+chart('c5', { tooltip: { trigger: 'axis' }, grid: { left: 40, right: 16, top: 20, bottom: 24 }, xAxis: { type: 'category', ...axis, data: cols }, yAxis: { type: 'value', ...axis },
+  series: [{ type: 'bar', barWidth: 22, data: [28, 34, 41, 30, 18, 25, 22, 26], itemStyle: { color: '#C8102E', borderRadius: [4, 4, 0, 0] }, label: { show: true, position: 'top', fontSize: 11 } }] });
+chart('c6', { grid: { left: 140, right: 30, top: 10, bottom: 20 }, tooltip: { trigger: 'axis' }, xAxis: { type: 'value', ...axis },
+  yAxis: { type: 'category', ...axis, data: ['禾下乘凉梦', '算力强国', '走进灯塔工厂', '红色足迹·韶山', '十八洞村回访', '余村绿色发展'] },
+  series: [{ type: 'bar', barWidth: 12, data: [1980, 2120, 2410, 2350, 2980, 3260], itemStyle: { color: '#7C3AED', borderRadius: [0, 6, 6, 0] } }] });
+chart('c7', { tooltip: { trigger: 'item' }, series: [{ type: 'pie', roseType: 'radius', radius: ['18%', '72%'], itemStyle: { borderRadius: 4 }, label: { fontSize: 11 },
+  data: [['乡村振兴', 62], ['革命文化', 54], ['大国重器', 41], ['社区服务', 36], ['绿色发展', 30], ['健康中国', 22]].map(d => ({ name: d[0], value: d[1] })) }] });
+chart('c8', { tooltip: { trigger: 'axis' }, legend: { right: 0, top: 0 }, grid: { left: 44, right: 40, top: 36, bottom: 24 },
+  xAxis: { type: 'category', ...axis, data: ['11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月'] },
+  yAxis: [{ type: 'value', ...axis }, { type: 'value', ...axis, splitLine: { show: false } }],
+  series: [{ name: '实践人次', type: 'line', smooth: true, areaStyle: { color: 'rgba(37,99,235,.08)' }, data: [620, 540, 1820, 960, 480, 720, 920, 1580, 3240, 2410, 860, 1120].map(v => Math.round(v * s)) },
+    { name: '立项数', type: 'line', yAxisIndex: 1, smooth: true, data: [42, 30, 168, 60, 38, 52, 76, 210, 280, 120, 64, 88].map(v => Math.round(v * s)) }] });
+</script>
+
+</main>
+
+<a class="proto-back" href="../index.html" title="返回原型导航页"><i data-lucide="layout-grid"></i>原型导航</a>
+<script>document.querySelectorAll('.role-switch select').forEach(function(s){s.value=document.documentElement.dataset.role;});</script>
+</body>
+</html>

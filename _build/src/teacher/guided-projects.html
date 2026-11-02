@@ -1,0 +1,90 @@
+---
+title: 我指导的项目
+layout: teacher
+menu: guided-projects
+crumb: 社会实践基地资源库 / 我的指导 / 我指导的项目
+inject: echarts, chinamap
+---
+<style>
+.layout{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start;margin-top:16px}
+#pmap{height:400px}
+.loc{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.loc:last-child{border:none}
+.loc i.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.loc span{flex:1}
+.steps{display:flex;gap:4px;margin-bottom:6px}
+.steps i{width:22px;height:6px;border-radius:3px;background:#E5E7EB}
+.steps i.on{background:var(--primary)}
+</style>
+
+<div class="page-hd">
+  <div><h1>我指导的项目</h1><p>项目数据来源于第二课堂社会实践库，教师端仅查看，申报与结项请在第二课堂办理</p></div>
+  <div class="actions"><select class="select" style="width:160px"><option>2025-2026 学年</option><option>2024-2025 学年</option></select></div>
+</div>
+
+<div class="card">
+  <div class="card-hd"><h3>项目列表</h3><div class="chips" data-chips="single"><span class="chip on">全部 4</span><span class="chip">立项 1</span><span class="chip">实践中 1</span><span class="chip">待结项 1</span><span class="chip">已结项 1</span></div></div>
+  <table class="table">
+    <thead><tr><th>项目名称</th><th>负责人 / 人数</th><th>实践基地</th><th>进度（立项 → 实践中 → 待结项 → 已结项）</th><th>操作</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<div class="layout">
+  <div class="card">
+    <div class="card-hd"><h3>项目实践地点分布</h3><span class="muted small">本学年 4 个 · 历史 5 个</span></div>
+    <div class="card-bd"><div id="pmap"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><h3>实践地点</h3><a class="more" href="../student/map.html?from=teacher">在数字地图查看</a></div>
+    <div class="card-bd" id="locs" style="padding-top:4px"></div>
+  </div>
+</div>
+
+<div class="modal-mask" id="pM">
+  <div class="modal" style="width:620px">
+    <div class="modal-hd">项目详情（只读）<span class="x" onclick="closeModal('pM')"><i data-lucide="x"></i></span></div>
+    <div class="modal-bd">
+      <div class="desc mb-16" id="pDesc"></div>
+      <div class="timeline">
+        <div class="tl-item done"><div class="t">第二课堂立项通过</div><div class="d">2026-09-28</div></div>
+        <div class="tl-item done"><div class="t">实践方案确认</div><div class="d">2026-10-25 19:40</div></div>
+        <div class="tl-item"><div class="t">开展现场实践</div><div class="d">计划 2026-11-15 前往实践基地</div></div>
+        <div class="tl-item wait"><div class="t">提交结项材料</div><div class="d">实践结束后 15 日内在第二课堂办理</div></div>
+      </div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('pM')">关闭</button><button class="btn btn-primary" onclick="toast('即将跳转第二课堂 · 项目详情','external-link')">在第二课堂查看</button></div>
+  </div>
+</div>
+
+<script>
+// [项目, 负责人, 人数, 基地, 省份, 经度, 纬度, 进度(1-4), 状态]
+const P = [
+  ['红色足迹·韶山：青年讲解员宣讲实践', '张一鸣', 12, '韶山毛泽东同志纪念馆', '湖南', 112.53, 27.92, 2, ['实践中', 's-info']],
+  ['十八洞村产业振兴回访调研', '刘子涵', 6, '十八洞村乡村振兴示范点', '湖南', 109.48, 28.42, 3, ['待结项', 's-pass']],
+  ['石榴籽一家亲：湘西民族团结影像志', '王雨桐', 3, '湘西州民族团结进步教育基地', '湖南', 109.73, 28.31, 1, ['立项', 's-pending']],
+  ['延安精神青年寻访', '周子墨', 2, '延安革命纪念馆', '陕西', 109.49, 36.60, 4, ['已结项', 's-cancel']]
+];
+const HIST = [[120.75, 30.75], [114.17, 26.57], [114.00, 38.35], [106.93, 27.70], [116.40, 39.90]];
+document.getElementById('rows').innerHTML = P.map((p, i) => `<tr>
+  <td><b>${p[0]}</b></td><td>${p[1]} <span class="muted small">· ${p[2]} 人</span></td><td class="small">${p[3]}</td>
+  <td><div class="steps">${[1, 2, 3, 4].map(s => `<i class="${s <= p[7] ? 'on' : ''}"></i>`).join('')}</div><span class="status ${p[8][1]}">${p[8][0]}</span></td>
+  <td><a class="btn-text" onclick="show(${i})">详情</a></td></tr>`).join('');
+document.getElementById('locs').innerHTML = P.map(p => `<div class="loc"><i class="dot" style="background:#0D9488"></i><span>${p[3]}<br><small class="muted">${p[0]}</small></span><b class="small">${p[4]}</b></div>`).join('')
+  + '<div class="loc"><i class="dot" style="background:#94A3B8"></i><span class="muted">历史指导项目 5 个（浙江、江西、河北、贵州、北京）</span></div>';
+function show(i){
+  const p = P[i];
+  document.getElementById('pDesc').innerHTML = `<div class="full"><span class="k">项目名称</span><span>${p[0]}</span></div><div><span class="k">负责人</span><span>${p[1]}</span></div><div><span class="k">团队人数</span><span>${p[2]} 人</span></div><div class="full"><span class="k">实践基地</span><span>${p[3]}</span></div>`;
+  openModal('pM');
+}
+echarts.init(document.getElementById('pmap')).setOption({
+  tooltip: { trigger: 'item', formatter: x => x.data && x.data.tip ? x.data.tip : x.name },
+  geo: { map: 'china', roam: true, zoom: 1.1, center: [105, 35], itemStyle: { areaColor: '#EEF3FB', borderColor: '#C7D4EA' }, emphasis: { itemStyle: { areaColor: '#DCE7FB' }, label: { show: false } },
+    regions: [{ name: '湖南', itemStyle: { areaColor: '#CFE0FB' } }] },
+  series: [
+    { type: 'scatter', coordinateSystem: 'geo', symbolSize: 8, itemStyle: { color: '#94A3B8' }, data: HIST.map(v => ({ value: v, tip: '历史指导项目' })) },
+    { type: 'effectScatter', coordinateSystem: 'geo', symbolSize: 13, rippleEffect: { scale: 3 }, itemStyle: { color: '#0D9488' },
+      data: P.map(p => ({ name: p[3], value: [p[5], p[6]], tip: `${p[0]}<br>${p[3]}` })) }
+  ]
+});
+</script>

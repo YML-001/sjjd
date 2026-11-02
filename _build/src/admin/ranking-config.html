@@ -1,0 +1,90 @@
+---
+title: 活跃基地榜配置
+layout: admin
+menu: ranking-config
+only: school
+crumb: 社会实践基地资源库 / 资源配置 / 活跃基地榜配置
+inject: data
+---
+<style>
+.layout{display:grid;grid-template-columns:380px 1fr;gap:16px;align-items:start}
+.w-row{margin-bottom:18px}
+.w-row .hd{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px}
+.w-row .hd b{color:var(--primary);font-size:15px}
+input[type=range]{width:100%;accent-color:var(--primary)}
+.sum{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:8px;background:var(--success-l);color:#166534;font-size:13px}
+.sum.bad{background:var(--danger-l);color:#991B1B}
+.pin{color:var(--text-3);cursor:pointer;padding:4px;border-radius:6px}
+.pin:hover{background:#F1F5F9}
+.pin.on{color:var(--red)}
+tr.hidden td{opacity:.4}
+tr.pinned td{background:#FFFBEB}
+</style>
+
+<div class="page-hd">
+  <div><h1>活跃基地榜配置</h1><p>配置统计周期与计算权重，榜单从第二课堂数据库自动计算；支持手动置顶、隐藏条目</p></div>
+  <div class="actions"><a class="btn" href="../student/ranking.html"><i data-lucide="eye"></i>预览学生端</a><button class="btn btn-primary" onclick="save()"><i data-lucide="save"></i>保存配置</button></div>
+</div>
+
+<div class="layout">
+  <div style="display:grid;gap:16px">
+    <div class="card">
+      <div class="card-hd"><h3>统计周期</h3></div>
+      <div class="card-bd">
+        <div class="radio-group"><label><input type="radio" name="p" checked>按学年</label><label><input type="radio" name="p">按学期</label></div>
+        <select class="select mt-8"><option>2025-2026 学年</option><option>2024-2025 学年</option></select>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><h3>计算权重</h3><span class="muted small">三项合计须为 100%</span></div>
+      <div class="card-bd">
+        <div class="w-row"><div class="hd"><span>立项项目数</span><b id="v0">40%</b></div><input type="range" min="0" max="100" value="40" data-i="0"></div>
+        <div class="w-row"><div class="hd"><span>参与人次</span><b id="v1">35%</b></div><input type="range" min="0" max="100" value="35" data-i="1"></div>
+        <div class="w-row"><div class="hd"><span>实践时长</span><b id="v2">25%</b></div><input type="range" min="0" max="100" value="25" data-i="2"></div>
+        <div class="sum" id="sum"><span>当前合计</span><b>100%</b></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><h3>生成方式</h3></div>
+      <div class="card-bd" style="display:grid;gap:14px">
+        <div class="flex between"><span>自动生成榜单</span><span class="switch on" onclick="this.classList.toggle('on')"></span></div>
+        <div class="flex between"><span>刷新频率</span><select class="select" style="width:140px"><option>每日 08:00</option><option>每周一</option><option>实时</option></select></div>
+        <div class="flex between"><span>上榜数量</span><select class="select" style="width:140px"><option>TOP 50</option><option>TOP 100</option><option>全部</option></select></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><h3>榜单预览与人工干预</h3><span class="muted small">置顶条目固定显示在前列 · 隐藏条目不对学生展示</span></div>
+    <table class="table">
+      <thead><tr><th style="width:60px">排名</th><th>实践基地</th><th class="r">项目数</th><th class="r">参与人次</th><th class="r">时长(h)</th><th class="r">综合得分</th><th style="width:110px">置顶 / 隐藏</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const list = [...BASES].sort((a, b) => b.persons - a.persons).slice(0, 12);
+function render(){
+  const w = [...document.querySelectorAll('input[type=range]')].map(r => +r.value / 100);
+  document.getElementById('rows').innerHTML = list.map((b, i) => { const p = Math.round(b.persons / 22) + 3, h = b.persons * 6;
+    const s = (p / 60 * w[0] + b.persons / 1300 * w[1] + h / 7800 * w[2]) * 100;
+    return `<tr class="${i === 3 ? 'pinned' : ''} ${i === 7 ? 'hidden' : ''}"><td class="num">${i + 1}</td><td><b style="font-weight:500">${b.name}</b>${i === 3 ? ' <span class="tag tag-red">已置顶</span>' : ''}${i === 7 ? ' <span class="tag tag-gray">已隐藏</span>' : ''}</td>
+      <td class="r num">${p}</td><td class="r num">${b.persons}</td><td class="r num">${h.toLocaleString()}</td><td class="r num strong">${s.toFixed(1)}</td>
+      <td><span class="pin ${i === 3 ? 'on' : ''}" title="置顶" onclick="this.classList.toggle('on');toast('已更新置顶状态')"><i data-lucide="pin"></i></span>
+        <span class="pin ${i === 7 ? 'on' : ''}" title="隐藏" onclick="this.closest('tr').classList.toggle('hidden');toast('已更新显示状态')"><i data-lucide="eye-off"></i></span></td></tr>`; }).join('');
+  refreshIcons();
+}
+document.querySelectorAll('input[type=range]').forEach(r => r.addEventListener('input', () => {
+  document.getElementById('v' + r.dataset.i).textContent = r.value + '%';
+  const total = [...document.querySelectorAll('input[type=range]')].reduce((s, x) => s + +x.value, 0);
+  const box = document.getElementById('sum'); box.classList.toggle('bad', total !== 100);
+  box.innerHTML = `<span>${total === 100 ? '当前合计' : '合计须为 100%，当前'}</span><b>${total}%</b>`;
+  render();
+}));
+function save(){
+  const total = [...document.querySelectorAll('input[type=range]')].reduce((s, x) => s + +x.value, 0);
+  toast(total === 100 ? '配置已保存，榜单将于下次刷新时生效' : '权重合计须为 100%', total === 100 ? 'check-circle-2' : 'alert-circle');
+}
+render();
+</script>

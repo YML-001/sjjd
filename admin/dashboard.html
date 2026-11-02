@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工作台 - 社会实践基地资源库（管理后台）</title>
+<script>
+(function(){
+  var p = new URLSearchParams(location.search).get('role');
+  if (p) localStorage.setItem('sjjd-role', p);
+  document.documentElement.dataset.role = localStorage.getItem('sjjd-role') || 'school';
+  document.addEventListener('DOMContentLoaded', function(){
+    var role = document.documentElement.dataset.role;
+    document.querySelectorAll('a[href*="from=admin"]').forEach(function(a){
+      var href = a.getAttribute('href');
+      if (href.indexOf('role=') === -1) a.setAttribute('href', href + '&role=' + encodeURIComponent(role));
+    });
+  });
+})();
+function switchRole(r){ localStorage.setItem('sjjd-role', r); location.href = location.pathname; }
+</script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+/* ========== 设计令牌 ========== */
+:root{
+  --primary:#2563EB;--primary-d:#1D4ED8;--primary-l:#EFF4FF;--navy:#0F2A6B;
+  --red:#C8102E;--red-l:#FDEDEF;--success:#16A34A;--success-l:#EAF7EE;
+  --warning:#D97706;--warning-l:#FEF4E4;--danger:#DC2626;--danger-l:#FDECEC;
+  --text:#1F2937;--text-2:#4B5563;--text-3:#9CA3AF;--border:#E5E7EB;--line:#F0F1F4;
+  --bg:#F4F6FA;--radius:10px;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.05);
+  --shadow-lg:0 16px 40px rgba(16,24,40,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;font-size:14px;color:var(--text);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%;object-fit:cover}
+button,input,select,textarea{font:inherit;color:inherit}
+svg.lucide{width:16px;height:16px;stroke-width:2;flex-shrink:0}
+.num{font-family:"DIN Alternate","Bahnschrift","Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums}
+html[data-role=college] [data-only=school],html[data-role=school] [data-only=college]{display:none!important}
+
+/* ========== 学生端门户布局 ========== */
+.wrap{width:1240px;max-width:calc(100% - 48px);margin:0 auto}
+.portal-hd{background:linear-gradient(90deg,#0F2A6B,#1E4FD8);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(15,42,107,.25)}
+.portal-hd-in{height:64px;display:flex;align-items:center;gap:32px}
+.logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.logo-ic{width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.16);display:grid;place-items:center}
+.logo-ic svg.lucide{width:20px;height:20px}
+.logo b{display:block;font-size:15px;letter-spacing:.5px}
+.logo small{display:block;font-size:12px;opacity:.75;margin-top:-2px}
+.portal-nav{display:flex;gap:4px;flex:1}
+.portal-nav a{padding:6px 12px;border-radius:6px;opacity:.85;transition:.2s;font-size:14px;white-space:nowrap}
+.portal-nav a:hover{opacity:1;background:rgba(255,255,255,.1)}
+.portal-nav a.on{opacity:1;background:rgba(255,255,255,.18);font-weight:600}
+.portal-user,.admin-hd-r{display:flex;align-items:center;gap:14px}
+.hd-ic{position:relative;width:34px;height:34px;display:grid;place-items:center;border-radius:8px;transition:.2s}
+.hd-ic:hover{background:rgba(255,255,255,.12)}
+.hd-ic.on,.hd-ic.on:hover{background:rgba(255,255,255,.2)}
+.hd-ic svg.lucide{width:18px;height:18px}
+.hd-ic em{position:absolute;top:2px;right:0;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#F43F5E;font-size:11px;font-style:normal;line-height:16px;text-align:center}
+.hd-me{display:flex;align-items:center;gap:8px;padding:4px 8px 4px 4px;border-radius:20px;transition:.2s}
+.hd-me:hover,.hd-me.on{background:rgba(255,255,255,.12)}
+.hd-me img{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.5)}
+.hd-me span{font-size:13px;line-height:1.25}
+.hd-me small{display:block;font-size:11px;opacity:.7}
+.portal-main{padding:20px 0 48px;min-height:calc(100vh - 120px)}
+.portal-ft{text-align:center;color:var(--text-3);font-size:12px;padding:20px 0 28px}
+
+/* ========== 管理端布局 ========== */
+.admin-hd{position:fixed;top:0;left:0;right:0;height:56px;background:linear-gradient(90deg,#0B2259,#163E9E);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:60}
+.role-switch{display:flex;align-items:center;gap:6px;font-size:13px;background:rgba(255,255,255,.1);padding:4px 6px 4px 10px;border-radius:8px}
+.role-switch select{background:#fff;color:var(--text);border:none;border-radius:6px;height:26px;padding:0 6px;cursor:pointer;outline:none}
+.ro-badge{display:flex;align-items:center;gap:6px;font-size:12px;background:rgba(255,255,255,.14);padding:4px 10px;border-radius:12px}
+.side{position:fixed;top:56px;left:0;bottom:0;width:220px;background:#fff;border-right:1px solid var(--border);padding:12px 10px;overflow-y:auto;z-index:40}
+.side-group{font-size:12px;color:var(--text-3);padding:14px 12px 6px}
+.side a{display:flex;align-items:center;gap:10px;height:38px;padding:0 12px;border-radius:8px;color:var(--text-2);transition:.15s;margin-bottom:2px}
+.side a:hover{background:#F3F5F9;color:var(--text)}
+.side a.on{background:var(--primary-l);color:var(--primary);font-weight:600}
+.side a span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lock-tag{display:none;font-style:normal;font-size:11px;color:var(--text-3);background:#F3F4F6;border-radius:4px;padding:0 5px}
+html[data-role=college] .side a[data-lock]{color:var(--text-3)}
+html[data-role=college] .lock-tag{display:inline}
+.admin-main{margin-left:220px;padding:76px 24px 40px;min-height:100vh}
+
+/* ========== 通用：面包屑 / 页头 ========== */
+.crumb{display:flex;align-items:center;gap:6px;color:var(--text-3);font-size:13px;margin-bottom:14px}
+.crumb svg.lucide{width:13px;height:13px}
+.crumb b{color:var(--text-2);font-weight:500}
+.page-hd{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px}
+.page-hd h1{font-size:22px;font-weight:600;line-height:1.3}
+.page-hd p{color:var(--text-3);margin-top:4px;font-size:13px}
+.page-hd .actions{display:flex;gap:10px}
+
+/* ========== 按钮 ========== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 14px;border-radius:7px;border:1px solid var(--border);background:#fff;color:var(--text-2);cursor:pointer;transition:.2s;white-space:nowrap;font-size:14px}
+.btn:hover{border-color:var(--primary);color:var(--primary)}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-d);color:#fff}
+.btn-red{background:var(--red);border-color:var(--red);color:#fff}
+.btn-red:hover{background:#A50D25;border-color:#A50D25;color:#fff}
+.btn-danger{color:var(--danger);border-color:#F7C9C9}
+.btn-danger:hover{background:var(--danger-l);border-color:var(--danger);color:var(--danger)}
+.btn-success{background:var(--success);border-color:var(--success);color:#fff}
+.btn-success:hover{background:#12813B;color:#fff}
+.btn-text{border:none;background:none;height:auto;padding:0;color:var(--primary)}
+.btn-text:hover{color:var(--primary-d);text-decoration:underline}
+.btn-text.danger{color:var(--danger)}
+.btn-sm{height:28px;padding:0 10px;font-size:13px}
+.btn-lg{height:42px;padding:0 22px;font-size:15px}
+.btn[disabled],.btn.disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+
+/* ========== 卡片 ========== */
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid #ECEEF2}
+.card-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.card-hd h3{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card-hd h3::before{content:"";width:3px;height:14px;background:var(--primary);border-radius:2px}
+.card-hd .more{font-size:13px;color:var(--text-3);display:flex;align-items:center;gap:2px}
+.card-hd .more:hover{color:var(--primary)}
+.card-bd{padding:20px}
+
+/* ========== 标签 / 状态 ========== */
+.tag{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:5px;font-size:12px;background:#F3F4F6;color:var(--text-2);white-space:nowrap}
+.tag svg.lucide{width:12px;height:12px}
+.tag-c{color:var(--c);background:color-mix(in srgb,var(--c) 10%,#fff)}
+.tag-blue{background:var(--primary-l);color:var(--primary)}
+.tag-red{background:var(--red-l);color:var(--red)}
+.tag-green{background:var(--success-l);color:var(--success)}
+.tag-orange{background:var(--warning-l);color:var(--warning)}
+.tag-gray{background:#F3F4F6;color:var(--text-3)}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.s-pending{color:var(--warning)}.s-pass{color:var(--success)}.s-reject{color:var(--danger)}.s-cancel{color:var(--text-3)}.s-info{color:var(--primary)}
+
+/* ========== 表格 ========== */
+.table{width:100%;border-collapse:collapse}
+.table th{background:#F8FAFC;color:var(--text-2);font-weight:500;text-align:left;padding:11px 14px;font-size:13px;border-bottom:1px solid var(--border);white-space:nowrap}
+.table td{padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.table tr:hover td{background:#FAFBFE}
+.table .r{text-align:right}
+.table .ops{display:flex;gap:14px;white-space:nowrap}
+.cell-main{display:flex;align-items:center;gap:12px}
+.cell-main img{width:56px;height:40px;border-radius:6px}
+.cell-main b{font-weight:500;display:block}
+.cell-main small{color:var(--text-3);font-size:12px}
+
+/* ========== 表单 ========== */
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px 28px}
+.span-2{grid-column:span 2}
+.field label{display:block;font-size:13px;color:var(--text-2);margin-bottom:6px;font-weight:500}
+.req{color:var(--danger);margin-right:2px}
+.input,.select,.textarea{width:100%;height:36px;border:1px solid #D7DCE3;border-radius:7px;padding:0 12px;background:#fff;outline:none;transition:.2s}
+.textarea{height:auto;min-height:96px;padding:8px 12px;resize:vertical;line-height:1.7}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.hint{font-size:12px;color:var(--text-3);margin-top:4px}
+.input-ic{position:relative}
+.input-ic svg.lucide{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-3)}
+.input-ic .input{padding-left:34px}
+.switch{position:relative;width:38px;height:22px;border-radius:11px;background:#D1D5DB;cursor:pointer;transition:.2s;display:inline-block;flex-shrink:0;border:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.switch.on{background:var(--primary)}
+.switch.on::after{left:19px}
+.radio-group{display:flex;gap:20px;height:36px;align-items:center}
+.radio-group label{display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;font-weight:400;color:var(--text)}
+.upload{border:1px dashed #C9D1DC;border-radius:8px;padding:18px;text-align:center;color:var(--text-3);font-size:13px;cursor:pointer;transition:.2s;background:#FAFBFC}
+.upload:hover{border-color:var(--primary);color:var(--primary)}
+
+/* ========== 筛选 ========== */
+.filter-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.filter-bar .select,.filter-bar .input{width:160px}
+.filter-row{display:flex;gap:16px;align-items:flex-start;padding:10px 0}
+.filter-row+.filter-row{border-top:1px dashed var(--line)}
+.filter-row>.k{width:76px;flex-shrink:0;color:var(--text-3);font-size:13px;line-height:28px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 12px;border-radius:14px;border:1px solid var(--border);background:#fff;font-size:13px;cursor:pointer;transition:.2s;color:var(--text-2);white-space:nowrap}
+.chip:hover{border-color:var(--primary);color:var(--primary)}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.chip i.dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+
+/* ========== Tabs ========== */
+.tabs{display:flex;gap:28px;border-bottom:1px solid var(--border);margin-bottom:18px}
+.tabs a{padding:10px 0;color:var(--text-2);position:relative;font-size:15px;display:flex;align-items:center;gap:6px}
+.tabs a:hover{color:var(--primary)}
+.tabs a.on{color:var(--primary);font-weight:600}
+.tabs a.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--primary);border-radius:1px}
+.tabs .cnt{font-size:12px;background:#F1F3F6;color:var(--text-3);border-radius:9px;padding:0 7px;font-weight:400}
+.tabs a.on .cnt{background:var(--primary-l);color:var(--primary)}
+
+/* ========== 统计卡 ========== */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat{background:#fff;border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);border:1px solid #ECEEF2;display:flex;gap:14px;align-items:center}
+.stat .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:var(--primary-l);color:var(--primary);flex-shrink:0}
+.stat .ic svg.lucide{width:22px;height:22px}
+.stat .v{font-size:26px;font-weight:700;line-height:1.2}
+.stat .v small{font-size:13px;font-weight:400;color:var(--text-3);margin-left:2px}
+.stat .l{color:var(--text-3);font-size:13px}
+.stat .trend{font-size:12px;color:var(--success)}
+.stat .trend.down{color:var(--danger)}
+
+/* ========== 分页 ========== */
+.pager{display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:18px;color:var(--text-3);font-size:13px}
+.pager a{min-width:30px;height:30px;padding:0 6px;display:grid;place-items:center;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text-2);transition:.2s}
+.pager a:hover{border-color:var(--primary);color:var(--primary)}
+.pager a.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.pager .total{margin-right:auto}
+
+/* ========== 弹窗 ========== */
+.modal-mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(2px)}
+.modal-mask.show{display:flex}
+.modal{background:#fff;border-radius:14px;width:520px;max-width:92vw;max-height:88vh;overflow:auto;box-shadow:var(--shadow-lg);animation:pop .22s ease-out}
+.modal-hd{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:16px}
+.modal-hd .x{cursor:pointer;color:var(--text-3)}
+.modal-bd{padding:20px}
+.modal-ft{padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+@keyframes pop{from{transform:translateY(8px) scale(.98);opacity:0}}
+
+/* ========== 时间线 ========== */
+.timeline{position:relative;padding-left:24px}
+.tl-item{position:relative;padding-bottom:22px}
+.tl-item::before{content:"";position:absolute;left:-20px;top:5px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--primary);box-sizing:border-box;z-index:1}
+.tl-item::after{content:"";position:absolute;left:-15px;top:17px;bottom:-5px;width:2px;background:#E5E7EB}
+.tl-item:last-child{padding-bottom:0}
+.tl-item:last-child::after{display:none}
+.tl-item.done::before{background:var(--primary)}
+.tl-item.ok::before{background:var(--success);border-color:var(--success)}
+.tl-item.bad::before{background:var(--danger);border-color:var(--danger)}
+.tl-item.wait::before{border-color:#D1D5DB}
+.tl-item .t{font-weight:500}
+.tl-item .d{color:var(--text-3);font-size:12px}
+.tl-item .note{margin-top:6px;background:#F8FAFC;border-radius:6px;padding:8px 12px;color:var(--text-2);font-size:13px}
+
+/* ========== 提示条 ========== */
+.alert{position:relative;display:block;padding:11px 16px 11px 40px;border-radius:8px;font-size:13px;line-height:1.7}
+.alert svg.lucide{position:absolute;left:15px;top:14px}
+.alert-info{background:var(--primary-l);color:#1E40AF}
+.alert-warn{background:var(--warning-l);color:#92400E}
+.alert-danger{background:var(--danger-l);color:#991B1B}
+.alert-success{background:var(--success-l);color:#166534}
+
+/* ========== 描述列表 ========== */
+.desc{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 32px}
+.desc>div{display:flex;gap:12px;font-size:14px}
+.desc .k{color:var(--text-3);width:84px;flex-shrink:0}
+.desc .full{grid-column:span 2}
+
+/* ========== 无权限 / 空状态 ========== */
+.no-perm{text-align:center;padding:80px 20px}
+.no-perm-ic{width:72px;height:72px;margin:0 auto 18px;border-radius:50%;background:#F3F4F6;display:grid;place-items:center;color:var(--text-3)}
+.no-perm-ic svg.lucide{width:32px;height:32px}
+.no-perm h3{font-size:18px;margin-bottom:6px}
+.no-perm p{color:var(--text-3);margin-bottom:22px}
+.empty{text-align:center;padding:60px 20px;color:var(--text-3)}
+
+/* ========== 进度条 ========== */
+.bar{height:8px;border-radius:4px;background:#EEF1F5;overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:4px;background:var(--primary)}
+
+/* ========== 轻提示 / 原型导航按钮 ========== */
+.toast{position:fixed;top:24px;left:50%;transform:translate(-50%,-16px);background:#111827;color:#fff;padding:10px 18px;border-radius:8px;opacity:0;transition:.25s;z-index:300;display:flex;gap:8px;align-items:center;font-size:14px;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.proto-back{position:fixed;right:20px;bottom:20px;z-index:90;display:flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:18px;background:rgba(17,24,39,.82);color:#fff;font-size:13px;box-shadow:var(--shadow-lg);transition:.2s}
+.proto-back:hover{background:#111827;transform:translateY(-2px)}
+
+/* ========== 工具类 ========== */
+.flex{display:flex;align-items:center}
+.between{justify-content:space-between}
+.wrap-f{flex-wrap:wrap}
+.gap-4{gap:4px}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}.gap-24{gap:24px}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mt-24{margin-top:24px}
+.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.muted{color:var(--text-3)}
+.small{font-size:12px}
+.strong{font-weight:600}
+.ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.c-primary{color:var(--primary)}.c-red{color:var(--red)}.c-success{color:var(--success)}.c-warning{color:var(--warning)}.c-danger{color:var(--danger)}
+
+/* ---------- 页面私有样式 ---------- */
+
+.hello{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.hello h1{font-size:22px}
+.hello p{color:var(--text-3);font-size:13px;margin-top:2px}
+.warn-bar{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:12px;margin-bottom:16px;background:linear-gradient(90deg,#FFF1F2,#FFF7ED);border:1px solid #FECDD3}
+.warn-bar .ic{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#F43F5E,#F97316);color:#fff;display:grid;place-items:center;flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(244,63,94,.15)}}
+.warn-bar b{color:#BE123C}
+.warn-bar .txt{flex:1;font-size:13px;color:#7F1D1D}
+.grid-main{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-top:16px}
+.todo a{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.todo a:last-child{border:none}
+.todo .ty{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;flex-shrink:0}
+.todo .t{flex:1;min-width:0}
+.todo .t b{font-weight:500;display:block}
+.todo .t small{color:var(--text-3);font-size:12px}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.quick a{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px;border-radius:10px;background:#F7F9FC;font-size:13px;transition:.2s;text-align:center}
+.quick a:hover{background:var(--primary-l);color:var(--primary)}
+.quick a span{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:#fff;color:var(--primary);box-shadow:var(--shadow)}
+.chart{height:260px}
+.log-item{display:flex;gap:10px;font-size:13px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.log-item:last-child{border:none}
+.log-item time{color:var(--text-3);white-space:nowrap;font-size:12px;width:76px}
+
+</style>
+<script>
+// 公共脚本：图标渲染、轻提示、弹窗、筛选标签切换
+function refreshIcons(){ window.lucide && lucide.createIcons(); }
+function toast(msg, icon){
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = '<i data-lucide="' + (icon || 'check-circle-2') + '"></i>' + msg;
+  document.body.appendChild(t); refreshIcons();
+  requestAnimationFrame(function(){ t.classList.add('show'); });
+  setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); }, 300); }, 2000);
+}
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+document.addEventListener('click', function(e){
+  var chip = e.target.closest('[data-chips] .chip');
+  if (chip) {
+    var group = chip.parentElement;
+    if (group.dataset.chips === 'single') group.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+    chip.classList.toggle('on');
+  }
+  if (e.target.classList.contains('modal-mask')) e.target.classList.remove('show');
+});
+document.addEventListener('DOMContentLoaded', refreshIcons);
+</script>
+
+</head>
+<body class="admin">
+
+<header class="admin-hd">
+  <a class="logo" href="dashboard.html"><span class="logo-ic"><i data-lucide="graduation-cap"></i></span><span><b>中南大学学工管理系统</b><small>社会实践基地资源库 · 管理后台</small></span></a>
+  <div class="admin-hd-r">
+    <label class="role-switch"><i data-lucide="repeat"></i>演示角色
+  <select onchange="switchRole(this.value)">
+    <option value="school">校级管理员</option><option value="college">院级管理员</option>
+  </select></label>
+    <a class="hd-ic" href="#" title="消息"><i data-lucide="bell"></i><em>5</em></a>
+    <div class="hd-me"><img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=80&h=80" alt="头像"><span data-only="school">王建国<small>校级管理员 · 校团委</small></span><span data-only="college">李敏<small>院级管理员 · 计算机学院</small></span></div>
+  </div>
+</header>
+<aside class="side"><a href="dashboard.html" class="on"><i data-lucide="layout-dashboard"></i><span>工作台</span></a>
+<div class="side-group">基地管理</div>
+<a href="../student/map.html?from=admin"><i data-lucide="map"></i><span>数字地图</span></a>
+<a href="bases.html"><i data-lucide="map-pinned"></i><span>实践基地管理</span></a>
+<a href="base-reports.html"><i data-lucide="file-check-2"></i><span>基地上报审核</span></a>
+<div class="side-group">资源配置</div>
+<a href="tags.html" data-lock><i data-lucide="tags"></i><span>专题标签库</span><em class="lock-tag">仅校级</em></a>
+<a href="ranking-config.html" data-lock><i data-lucide="trophy"></i><span>榜单配置</span><em class="lock-tag">仅校级</em></a>
+<div class="side-group">优秀案例</div>
+<a href="case-pool.html"><i data-lucide="inbox"></i><span>案例候选池</span></a>
+<a href="case-library.html"><i data-lucide="award"></i><span>优秀案例库</span></a>
+<div class="side-group">数据分析</div>
+<a href="data-board.html"><i data-lucide="bar-chart-3"></i><span>数据可视化看板</span></a>
+<a href="ai-insight.html" data-lock><i data-lucide="sparkles"></i><span>AI 数据洞察</span><em class="lock-tag">仅校级</em></a>
+<div class="side-group">AI 智能匹配</div>
+<a href="ai-weights.html" data-lock><i data-lucide="sliders-horizontal"></i><span>因子权重配置</span><em class="lock-tag">仅校级</em></a>
+<a href="ai-effect.html" data-lock><i data-lucide="activity"></i><span>推荐效果数据</span><em class="lock-tag">仅校级</em></a>
+<a href="ai-blacklist.html" data-lock><i data-lucide="ban"></i><span>推荐黑名单</span><em class="lock-tag">仅校级</em></a>
+<div class="side-group">系统</div>
+<a href="operation-logs.html"><i data-lucide="scroll-text"></i><span>操作日志</span></a>
+<a href="second-classroom.html"><i data-lucide="external-link"></i><span>第二课堂联动</span></a></aside>
+<main class="admin-main">
+<div class="crumb"><span>社会实践基地资源库</span><i data-lucide="chevron-right"></i><b>工作台</b></div>
+<div class="hello">
+  <div>
+    <h1 data-only="school">晚上好，王建国老师</h1><h1 data-only="college">晚上好，李敏老师</h1>
+    <p>2026 年 10 月 26 日 星期一 · <span data-only="school">数据范围：全校</span><span data-only="college">数据范围：计算机学院（本院）</span></p>
+  </div>
+  <div class="flex gap-12">
+    <a class="btn" href="data-board.html"><i data-lucide="bar-chart-3"></i>数据看板</a>
+    <a class="btn btn-primary" data-only="school" href="base-edit.html"><i data-lucide="plus"></i>新增基地</a>
+    <a class="btn btn-primary" data-only="college" href="base-edit.html"><i data-lucide="upload"></i>上报新基地</a>
+  </div>
+</div>
+
+<!-- AI 预警：校级看到全部预警并可推送；院级看到校级推送的本院预警 -->
+<div class="warn-bar" data-only="school">
+  <span class="ic"><i data-lucide="siren"></i></span>
+  <div class="txt"><b>AI 资源紧缺预警 · 3 条</b>：预测 2027 春季学期「韶山毛泽东同志纪念馆」实践人次 1,180，超出接待上限 1,000 人次；「十八洞村」「三一重工“灯塔工厂”」同步预警。建议拓展同类主题基地或提升接待容量。</div>
+  <a class="btn btn-sm" href="ai-insight.html">查看洞察</a><button class="btn btn-sm btn-red" onclick="toast('已推送至 3 个相关学院管理员')"><i data-lucide="send"></i>一键推送院级</button>
+</div>
+<div class="warn-bar" data-only="college">
+  <span class="ic"><i data-lucide="siren"></i></span>
+  <div class="txt"><b>校级推送预警</b>：本院共建「国家超级计算长沙中心」下学期预测实践人次 420，超出接待上限 360 人次，建议拓展同类「攀高攻坚」主题基地或协调增加接待批次。<span class="muted">（校团委 · 王建国 推送于 10-25）</span></div>
+  <button class="btn btn-sm" onclick="toast('已标记为跟进中')">标记跟进</button><a class="btn btn-sm btn-primary" href="base-edit.html">上报新基地</a>
+</div>
+
+<div class="stats" data-only="school">
+  <div class="stat"><span class="ic"><i data-lucide="map-pinned"></i></span><div><div class="v num">286<small>个</small></div><div class="l">基地总数 · 本月新增 6</div></div></div>
+  <div class="stat"><span class="ic" style="background:#FEF4E4;color:#D97706"><i data-lucide="inbox"></i></span><div><div class="v num">6<small>个</small></div><div class="l">案例候选待推荐</div></div></div>
+  <div class="stat"><span class="ic" style="background:#F3E8FF;color:#7C3AED"><i data-lucide="file-check-2"></i></span><div><div class="v num">5<small>条</small></div><div class="l">待审核院级上报</div></div></div>
+  <div class="stat"><span class="ic" style="background:#FDEDEF;color:#C8102E"><i data-lucide="award"></i></span><div><div class="v num">8<small>个</small></div><div class="l">待终审优秀案例</div></div></div>
+</div>
+<div class="stats" data-only="college">
+  <div class="stat"><span class="ic"><i data-lucide="map-pinned"></i></span><div><div class="v num">18<small>个</small></div><div class="l">本院上报基地</div></div></div>
+  <div class="stat"><span class="ic" style="background:#FEF4E4;color:#D97706"><i data-lucide="file-pen-line"></i></span><div><div class="v num">1<small>条</small></div><div class="l">上报被驳回待修改</div></div></div>
+  <div class="stat"><span class="ic" style="background:#F3E8FF;color:#7C3AED"><i data-lucide="hourglass"></i></span><div><div class="v num">2<small>条</small></div><div class="l">上报待校级审核</div></div></div>
+  <div class="stat"><span class="ic" style="background:#FDEDEF;color:#C8102E"><i data-lucide="send"></i></span><div><div class="v num">3<small>个</small></div><div class="l">可推荐本院案例</div></div></div>
+</div>
+
+<div class="grid-main">
+  <div class="card">
+    <div class="card-hd"><h3>待办事项</h3><span class="muted small">按提交时间排序</span></div>
+    <div class="card-bd todo" style="padding-top:4px;padding-bottom:4px">
+      <a href="base-report-detail.html" data-only="school"><span class="ty" style="background:#F3E8FF;color:#7C3AED"><i data-lucide="file-check-2"></i></span><span class="t"><b>上报审核 · 计算机学院上报「长沙人工智能创新中心」</b><small>上报人 李敏 · 今天 16:20</small></span><span class="btn btn-sm btn-primary">去审核</span></a>
+      <a href="base-reports.html" data-only="college"><span class="ty" style="background:#F3E8FF;color:#7C3AED"><i data-lucide="hourglass"></i></span><span class="t"><b>上报进度 · 「长沙人工智能创新中心」等待校级审核</b><small>提交于 今天 16:20</small></span><span class="btn btn-sm">查看</span></a>
+      <a href="case-review.html?id=3" data-only="school"><span class="ty" style="background:#FDEDEF;color:#C8102E"><i data-lucide="award"></i></span><span class="t"><b>案例终审 · 走进“灯塔工厂”：智能制造人才需求调研</b><small>机械工程学院推荐 · 昨天 10:12</small></span><span class="btn btn-sm btn-primary">去终审</span></a>
+      <a href="case-pool.html" data-only="college"><span class="ty" style="background:#FDEDEF;color:#C8102E"><i data-lucide="send"></i></span><span class="t"><b>案例推荐 · 候选池新增 3 个本院已结项评优项目</b><small>系统自动抓取 · 昨天 02:00</small></span><span class="btn btn-sm btn-primary">去推荐</span></a>
+      <a href="case-pool.html" data-only="school"><span class="ty" style="background:#FEF4E4;color:#D97706"><i data-lucide="inbox"></i></span><span class="t"><b>案例遴选 · 候选池新增 6 个已结项评优项目待推荐</b><small>系统自动抓取 · 昨天 02:00</small></span><span class="btn btn-sm btn-primary">去处理</span></a>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><h3>快捷入口</h3></div>
+    <div class="card-bd quick">
+      <a href="bases.html"><span><i data-lucide="map-pinned"></i></span>基地管理</a>
+      <a href="base-reports.html"><span><i data-lucide="file-check-2"></i></span>上报审核</a>
+      <a href="case-pool.html"><span><i data-lucide="inbox"></i></span>案例候选池</a>
+      <a href="data-board.html"><span><i data-lucide="bar-chart-3"></i></span>数据看板</a>
+      <a href="tags.html" data-only="school"><span><i data-lucide="tags"></i></span>标签库</a>
+      <a href="ai-insight.html" data-only="school"><span><i data-lucide="sparkles"></i></span>AI 洞察</a>
+      <a href="ai-weights.html" data-only="school"><span><i data-lucide="sliders-horizontal"></i></span>AI 配置</a>
+      <a href="base-reports.html" data-only="college"><span><i data-lucide="file-check-2"></i></span>我的上报</a>
+      <a href="operation-logs.html"><span><i data-lucide="scroll-text"></i></span>操作日志</a>
+      <a href="second-classroom.html"><span><i data-lucide="external-link"></i></span>第二课堂</a>
+    </div>
+  </div>
+</div>
+
+<div class="grid-main">
+  <div class="card">
+    <div class="card-hd"><h3>近 6 个月立项与实践人次</h3><span class="muted small" data-only="college">本院数据</span></div>
+    <div class="card-bd"><div class="chart" id="trend"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><h3>最近操作</h3><a class="more" href="operation-logs.html">全部日志<i data-lucide="chevron-right"></i></a></div>
+    <div class="card-bd">
+      <div class="log-item"><time>今天 20:15</time><span>王建国 终审入库案例「十八洞村产业振兴回访」</span></div>
+      <div class="log-item"><time>今天 16:20</time><span>李敏（计算机学院）上报基地「长沙人工智能创新中心」</span></div>
+      <div class="log-item"><time>今天 11:02</time><span>王建国 修改 AI 因子权重：地理位置 20% → 25%</span></div>
+      <div class="log-item"><time>昨天 17:40</time><span>王建国 下架案例「旧城改造口述史」</span></div>
+      <div class="log-item"><time>昨天 09:18</time><span>周涛（机械工程学院）编辑基地「三一重工“灯塔工厂”」接待容量</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const isSchool = document.documentElement.dataset.role === 'school';
+const k = isSchool ? 1 : 0.12;
+echarts.init(document.getElementById('trend')).setOption({
+  tooltip: { trigger: 'axis' }, legend: { data: ['立项数', '实践人次'], right: 0, top: 0 },
+  grid: { left: 40, right: 40, top: 36, bottom: 24 },
+  xAxis: { type: 'category', data: ['5月', '6月', '7月', '8月', '9月', '10月'], axisLine: { lineStyle: { color: '#CBD5E1' } } },
+  yAxis: [{ type: 'value', splitLine: { lineStyle: { color: '#F1F5F9' } } }, { type: 'value', splitLine: { show: false } }],
+  series: [
+    { name: '立项数', type: 'bar', barWidth: 18, itemStyle: { color: '#2563EB', borderRadius: [4, 4, 0, 0] }, data: [76, 210, 280, 120, 64, 88].map(v => Math.round(v * k)) },
+    { name: '实践人次', type: 'line', yAxisIndex: 1, smooth: true, symbolSize: 7, itemStyle: { color: '#F97316' }, areaStyle: { color: 'rgba(249,115,22,.08)' }, data: [920, 1580, 3240, 2410, 860, 1120].map(v => Math.round(v * k)) }
+  ]
+});
+</script>
+
+</main>
+
+<a class="proto-back" href="../index.html" title="返回原型导航页"><i data-lucide="layout-grid"></i>原型导航</a>
+<script>document.querySelectorAll('.role-switch select').forEach(function(s){s.value=document.documentElement.dataset.role;});</script>
+</body>
+</html>

@@ -1,0 +1,292 @@
+---
+title: AI 智能匹配
+layout: student
+menu: ai-match
+crumb: 首页 / AI 智能匹配
+inject: data
+---
+<style>
+.ai-hero{position:relative;border-radius:14px;padding:26px 32px;color:#fff;overflow:hidden;background:linear-gradient(120deg,#1E1B4B,#3730A3 45%,#2563EB);margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.ai-hero::after{content:"";position:absolute;right:-60px;top:-80px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(167,139,250,.5),transparent 70%)}
+.ai-hero h1{font-size:24px;display:flex;align-items:center;gap:10px}
+.ai-hero p{opacity:.8;margin-top:6px}
+.ai-hero .src{display:flex;gap:10px;margin-top:14px;position:relative;z-index:1}
+.ai-hero .src span{font-size:12px;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.14);display:flex;align-items:center;gap:4px}
+.ai-hero .src svg{width:12px;height:12px}
+.layout{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+.cond .field{margin-bottom:14px}
+.cond .from{font-size:11px;color:var(--text-3);font-weight:400;margin-left:6px}
+.behavior{background:#F7F9FC;border-radius:8px;padding:12px;font-size:12px;color:var(--text-2);display:grid;gap:6px}
+.behavior div{display:flex;justify-content:space-between}
+.rec{display:flex;gap:16px;align-items:center;padding:16px;border:1px solid #ECEEF2;border-radius:12px;transition:.25s;position:relative}
+.rec:hover{border-color:#C7D7FE;box-shadow:0 10px 24px rgba(37,99,235,.08)}
+.rec+.rec{margin-top:12px}
+.rec img{width:120px;height:84px;border-radius:8px;flex-shrink:0}
+.rec .bd{flex:1;min-width:0}
+.rec h4{font-size:16px;display:flex;align-items:center;gap:8px}
+.reasons{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.reasons span{font-size:12px;padding:2px 8px;border-radius:4px;background:#F0F5FF;color:#3451B2;display:flex;align-items:center;gap:4px}
+.reasons svg{width:12px;height:12px}
+.ring{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;background:conic-gradient(var(--primary) calc(var(--p)*1%),#E8EDF5 0)}
+.ring b{width:52px;height:52px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:16px;color:var(--primary)}
+.ring small{display:block;font-size:10px;color:var(--text-3);margin-top:-14px}
+.rec .ops{display:flex;flex-direction:column;gap:8px}
+.rec .x{position:absolute;right:10px;top:8px;color:var(--text-3);cursor:pointer}
+.rec .x:hover{color:var(--danger)}
+.case-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.cc{border:1px solid #ECEEF2;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.cc img{height:120px;width:100%}
+.cc .bd{padding:12px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.cc b{font-size:14px;font-weight:500}
+.cc .ops{display:flex;gap:8px;margin-top:auto}
+.cc .ops .btn{flex:1}
+.proto-back{bottom:84px}
+html,body{height:100%;overflow:hidden}
+.admin-main{display:flex;flex-direction:column;height:100vh;padding-bottom:0}
+.admin-main>.crumb,.bottom-bar{flex:none}
+.page-scroll{flex:1;min-height:0;overflow:auto;padding-bottom:16px}
+.bottom-bar{z-index:30;display:flex;justify-content:space-between;align-items:center;gap:16px;margin:0 -24px 0;padding:14px 24px;background:#fff;border-top:1px solid var(--border)}
+.loading{display:none;align-items:center;gap:10px;color:var(--primary);font-size:14px;padding:30px;justify-content:center}
+.loading.show{display:flex}
+.spin{width:18px;height:18px;border:2px solid #C7D7FE;border-top-color:var(--primary);border-radius:50%;animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+
+<div class="page-scroll">
+<div class="ai-hero">
+  <div>
+    <h1><i data-lucide="sparkles"></i>AI 智能匹配推荐</h1>
+    <p>结合你的学籍信息、申报意向与浏览行为，为你匹配最合适的实践基地与优秀案例</p>
+    <div class="src"><span><i data-lucide="graduation-cap"></i>学籍信息</span><span><i data-lucide="file-pen-line"></i>申报意向</span><span><i data-lucide="mouse-pointer-click"></i>浏览行为</span><span><i data-lucide="history"></i>过往实践</span></div>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="card cond">
+    <div class="card-hd"><h3>匹配条件</h3><a class="more" onclick="toast('已恢复为默认条件')" style="cursor:pointer">重置</a></div>
+    <div class="card-bd">
+      <div class="field"><label>学院<span class="from">来自学籍</span></label><select class="select"><option>计算机学院</option></select></div>
+      <div class="field"><label>专业<span class="from">来自学籍</span></label><select class="select"><option>软件工程</option></select></div>
+      <div class="field"><label>年级</label><select class="select"><option>2024 级（大二）</option></select></div>
+      <div class="field"><label>意向地点<span class="from">来自申报草稿</span></label><select class="select"><option>湖南省</option><option>不限</option><option>北京市</option></select></div>
+      <div class="field"><label>实践主题（可多选）</label>
+        <div class="chips" data-chips="multi"><span class="chip on">脱贫攻坚乡村振兴</span><span class="chip on">大国重器</span><span class="chip">革命文化</span><span class="chip">行业认知</span><span class="chip">社区服务</span></div></div>
+      <div class="field"><label>行为数据<span class="from">近 30 天</span></label>
+        <div class="behavior"><div><span>浏览过的基地</span><b>12 个</b></div><div><span>查看过的案例</span><b>8 个</b></div><div><span>过往实践标签</span><b>乡村振兴、支教</b></div></div></div>
+      <button class="btn btn-primary" style="width:100%" onclick="rematch()"><i data-lucide="wand-sparkles"></i>按条件重新匹配</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-hd"><h3>推荐实践基地</h3><span class="muted small">匹配完成 · 共 4 个结果 · 生成于刚刚</span></div>
+      <div class="card-bd">
+        <div class="loading" id="loading"><span class="spin"></span>AI 正在重新分析你的偏好…</div>
+        <div id="recList"></div>
+      </div>
+    </div>
+
+    <div class="card mt-20">
+      <div class="card-hd"><h3>同主题优秀案例</h3><a class="more" href="cases.html">更多案例<i data-lucide="chevron-right"></i></a></div>
+      <div class="card-bd case-cards" id="caseList"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div class="bottom-bar">
+  <span class="muted small"><i data-lucide="shield-check" style="vertical-align:-3px"></i> 推荐结果仅供参考，你的反馈将用于优化推荐模型</span>
+  <div class="flex gap-12">
+    <button class="btn" onclick="openModal('dislike')"><i data-lucide="thumbs-down"></i>不感兴趣</button>
+    <button class="btn btn-primary" onclick="rematch()"><i data-lucide="refresh-cw"></i>重新匹配</button>
+  </div>
+</div>
+
+<!-- 不感兴趣反馈 -->
+<div class="modal-mask" id="dislike">
+  <div class="modal">
+    <div class="modal-hd">告诉我们原因<span class="x" onclick="closeModal('dislike')"><i data-lucide="x"></i></span></div>
+    <div class="modal-bd">
+      <div class="chips" data-chips="multi"><span class="chip">地点太远</span><span class="chip">主题不感兴趣</span><span class="chip">与专业不相关</span><span class="chip">接待人数不合适</span><span class="chip">已经去过</span><span class="chip">其他</span></div>
+      <textarea class="textarea mt-16" placeholder="补充说明（选填）"></textarea>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('dislike')">取消</button><button class="btn btn-primary" onclick="closeModal('dislike');toast('感谢反馈，已为你优化推荐');rematch()">提交反馈</button></div>
+  </div>
+</div>
+
+<script>
+const RECS = [
+  { id: 3, p: 96, why: [['target', '主题匹配：乡村振兴'], ['map-pin', '意向地点：湖南省内'], ['history', '与过往支教实践相关']] },
+  { id: 6, p: 91, why: [['target', '主题匹配：大国重器'], ['graduation-cap', '专业相关：智能制造软件'], ['users', '接待容量适合团队']] },
+  { id: 13, p: 87, why: [['graduation-cap', '专业强相关：高性能计算'], ['building-2', '本院共建基地'], ['eye', '你近期浏览过']] },
+  { id: 30, p: 82, why: [['target', '主题匹配：乡村振兴'], ['route', '距学校 70 公里'], ['users', '接待容量适合 10 人团队']] }
+];
+function renderRecs(list){
+  document.getElementById('recList').innerHTML = list.map(r => { const b = BASES.find(x => x.id === r.id); return `
+    <div class="rec">
+      <span class="x" title="不感兴趣" onclick="this.parentElement.remove();toast('已标记为不感兴趣')"><i data-lucide="x"></i></span>
+      <div class="ring" style="--p:${r.p}"><b class="num">${r.p}%</b></div>
+      <img data-shot="基地图片" src="${img(b.img, 240, 170)}" alt="">
+      <div class="bd">
+        <h4>${b.name}${catTag(b.c)}</h4>
+        <div class="muted small mt-8">${b.lv}基地 · ${b.prov}${b.city} · 单批接待 ${b.cap} 人</div>
+        <div class="reasons">${r.why.map(w => `<span><i data-lucide="${w[0]}"></i>${w[1]}</span>`).join('')}</div>
+      </div>
+      <div class="ops"><a class="btn btn-sm btn-primary" href="map.html?locate=${b.id}"><i data-lucide="locate-fixed"></i>定位地图</a><a class="btn btn-sm" href="base-detail.html">查看详情</a></div>
+    </div>`; }).join('');
+  refreshIcons();
+}
+document.getElementById('caseList').innerHTML = [CASES[1], CASES[2], CASES[4]].map(c => `
+  <div class="cc"><img data-shot="案例封面" src="${img(c.img, 400, 240)}" alt=""><div class="bd">${catTag(c.c)}<b class="clamp-2">${c.title}</b><span class="muted small">${c.col} · ${c.year}</span>
+    <div class="ops"><a class="btn btn-sm" href="case-detail.html?id=${c.id}">查看案例</a><button class="btn btn-sm btn-primary" onclick="toast('申报模板框架已复制，可粘贴到第二课堂申报页')">复制申报模板</button></div></div></div>`).join('');
+renderRecs(RECS);
+function rematch(){
+  const box = document.getElementById('recList'), ld = document.getElementById('loading');
+  box.style.display = 'none'; ld.classList.add('show');
+  setTimeout(() => { ld.classList.remove('show'); box.style.display = ''; renderRecs([...RECS].sort(() => Math.random() - .5)); toast('已为你重新生成推荐结果', 'sparkles'); }, 1200);
+}
+</script>
+
+<!-- 内容图灯箱 -->
+<script>
+// 内容图灯箱：点哪张看哪张；同一组可左右切换。关闭大图不离开当前页，也不关掉底下的弹窗。
+(function () {
+  if (document.getElementById('shotViewer')) return;
+  var css = document.createElement('style');
+  css.textContent = ''
+    + 'img[data-shot],[data-shots] img{cursor:zoom-in}'
+    + '.shot-viewer{position:fixed;inset:0;z-index:240;background:rgba(15,23,42,.86);display:none;align-items:center;justify-content:center}'
+    + '.shot-viewer.show{display:flex}'
+    + '.shot-viewer img{flex:0 0 auto;max-width:min(1080px,82vw);max-height:82vh;width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,.45);background:#111827;cursor:default}'
+    + '.shot-viewer .x,.shot-viewer .nav{position:absolute;z-index:2;display:grid;place-items:center;cursor:pointer;color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.28);user-select:none}'
+    + '.shot-viewer .x{right:22px;top:18px;width:36px;height:36px;border-radius:50%}'
+    + '.shot-viewer .nav{top:50%;width:42px;height:64px;margin-top:-32px;border-radius:8px}'
+    + '.shot-viewer .prev{left:18px}.shot-viewer .next{right:18px}'
+    + '.shot-viewer .cap{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#E5E7EB;font-size:13px;letter-spacing:1px;pointer-events:none}';
+  document.head.appendChild(css);
+
+  var box = document.createElement('div');
+  box.className = 'shot-viewer';
+  box.id = 'shotViewer';
+  box.innerHTML = '<span class="x" title="关闭"><i data-lucide="x"></i></span>'
+    + '<span class="nav prev" title="上一张"><i data-lucide="chevron-left"></i></span>'
+    + '<img alt="大图">'
+    + '<span class="nav next" title="下一张"><i data-lucide="chevron-right"></i></span>'
+    + '<span class="cap">图片</span>';
+  document.body.appendChild(box);
+
+  var urls = [], index = 0, label = '图片';
+  var big = box.querySelector('img');
+  var cap = box.querySelector('.cap');
+  var prev = box.querySelector('.prev');
+  var next = box.querySelector('.next');
+
+  function enlarge(src) {
+    var w = /[?&]w=(\d+)/.exec(src);
+    var h = /[?&]h=(\d+)/.exec(src);
+    if (!w) return src;
+    var nw = 1600;
+    var nh = h ? Math.max(1, Math.round(Number(h[1]) * nw / Number(w[1]))) : 0;
+    var out = src.replace(/([?&])w=\d+/, '$1w=' + nw);
+    if (nh) out = out.replace(/([?&])h=\d+/, '$1h=' + nh);
+    return out;
+  }
+  var token = 0;
+  function fit() {
+    if (!big.naturalWidth || !big.naturalHeight) return;
+    var maxW = Math.min(1080, window.innerWidth * 0.82);
+    var maxH = window.innerHeight * 0.82;
+    var scale = Math.min(maxW / big.naturalWidth, maxH / big.naturalHeight);
+    big.style.width = Math.max(1, Math.round(big.naturalWidth * scale)) + 'px';
+    big.style.height = Math.max(1, Math.round(big.naturalHeight * scale)) + 'px';
+  }
+  function paint() {
+    var my = ++token;
+    var thumb = urls[index];
+    var full = enlarge(thumb);
+    function apply(src) {
+      if (my !== token) return;
+      if (big.src === src && big.complete && big.naturalWidth) { fit(); return; }
+      big.onload = function () { if (my === token) fit(); };
+      big.src = src;
+      if (my === token && big.complete && big.naturalWidth) fit();
+    }
+    // 先用页面上已经加载的缩略图撑开大图，再换成更高清的地址
+    apply(thumb);
+    if (full !== thumb) {
+      var pre = new Image();
+      pre.onload = function () { apply(full); };
+      pre.src = full;
+    }
+    cap.textContent = label + ' ' + (index + 1) + ' / ' + urls.length;
+    var single = urls.length < 2;
+    prev.style.display = single ? 'none' : '';
+    next.style.display = single ? 'none' : '';
+  }
+
+  function open(list, i, lab) {
+    urls = list;
+    index = i;
+    label = lab || '图片';
+    paint();
+    box.classList.add('show');
+    if (window.refreshIcons) refreshIcons();
+  }
+  function step(d) {
+    if (urls.length < 2) return;
+    index = (index + d + urls.length) % urls.length;
+    paint();
+  }
+  function close() { box.classList.remove('show'); }
+
+  box.addEventListener('click', function (e) { if (e.target === box) close(); });
+  box.querySelector('.x').addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    close();
+  });
+  prev.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(-1);
+  });
+  next.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(1);
+  });
+
+  function shotFromEvent(e) {
+    var t = e.target;
+    if (!t) return null;
+    if (t.nodeType !== 1) t = t.parentElement;
+    if (!t || !t.closest) return null;
+    var im = t.closest('img');
+    if (!im || im.closest('.shot-viewer')) return null;
+    if (!im.hasAttribute('data-shot') && !im.closest('[data-shots]')) return null;
+    return im;
+  }
+  function onPick(e) {
+    var im = shotFromEvent(e);
+    if (!im) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var group = im.closest('[data-shots]');
+    if (group) {
+      var imgs = Array.prototype.slice.call(group.querySelectorAll('img'));
+      open(imgs.map(function (el) { return el.currentSrc || el.src; }), Math.max(0, imgs.indexOf(im)), group.getAttribute('data-shots') || '图片');
+    } else {
+      open([im.currentSrc || im.src], 0, im.getAttribute('data-shot') || '图片');
+    }
+  }
+  document.addEventListener('click', onPick, true);
+  document.addEventListener('auxclick', onPick, true);
+  document.addEventListener('keydown', function (e) {
+    if (!box.classList.contains('show')) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+  }, true);
+})();
+</script>

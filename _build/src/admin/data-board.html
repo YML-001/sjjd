@@ -1,0 +1,91 @@
+---
+title: 数据可视化看板
+layout: admin
+menu: data-board
+crumb: 社会实践基地资源库 / 数据分析 / 数据可视化看板
+inject: echarts
+---
+<style>
+.kpi6{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:16px}
+.kpi6 .stat{flex-direction:column;align-items:flex-start;gap:6px;padding:16px 18px}
+.kpi6 .stat .v{font-size:24px}
+.dim{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;margin:22px 0 12px}
+.dim span{font-size:12px;font-weight:400;color:var(--text-3)}
+.dim i.bar{width:4px;height:16px;border-radius:2px;background:var(--primary)}
+.chart{height:280px}
+.scope{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:12px;background:var(--primary-l);color:var(--primary)}
+</style>
+
+<div class="page-hd">
+  <div><h1>数据可视化看板</h1><p>数据来源第二课堂社会实践库，每日 02:00 同步 · <span class="scope" data-only="school"><i data-lucide="globe"></i>全校数据</span><span class="scope" data-only="college"><i data-lucide="building-2"></i>仅本院数据（计算机学院）</span></p></div>
+  <div class="actions">
+    <select class="select" style="width:140px"><option>2025-2026 学年</option><option>2024-2025 学年</option></select>
+    <select class="select" style="width:120px"><option>全学年</option><option>秋季学期</option><option>春季学期</option></select>
+    <select class="select" style="width:140px" data-only="school"><option>全部学院</option><option>计算机学院</option><option>机械工程学院</option></select>
+    <select class="select" style="width:140px" data-only="college" disabled><option>计算机学院</option></select>
+    <button class="btn btn-primary" onclick="toast(document.documentElement.dataset.role==='school'?'正在导出全校报表 Excel':'正在导出本院报表 Excel')"><i data-lucide="file-spreadsheet"></i>导出 Excel</button>
+  </div>
+</div>
+
+<div class="kpi6" id="kpis"></div>
+
+<div class="dim"><i class="bar"></i>基地维度<span>基地实践人次分布、结项完成率、基地主题分布</span></div>
+<div class="grid-3">
+  <div class="card"><div class="card-hd"><h3>基地实践人次 TOP 8</h3></div><div class="card-bd"><div class="chart" id="c1"></div></div></div>
+  <div class="card"><div class="card-hd"><h3>结项完成率</h3></div><div class="card-bd"><div class="chart" id="c2"></div></div></div>
+  <div class="card"><div class="card-hd"><h3>基地主题分布</h3></div><div class="card-bd"><div class="chart" id="c3"></div></div></div>
+</div>
+
+<div class="dim"><i class="bar"></i>学院维度<span>学生参与率、实践时长统计、案例产出数量</span></div>
+<div class="grid-2">
+  <div class="card"><div class="card-hd"><h3>各学院学生参与率与实践时长</h3></div><div class="card-bd"><div class="chart" id="c4"></div></div></div>
+  <div class="card"><div class="card-hd"><h3>各学院优秀案例产出</h3></div><div class="card-bd"><div class="chart" id="c5"></div></div></div>
+</div>
+
+<div class="dim"><i class="bar"></i>案例维度与时间趋势<span>案例浏览热度排行、实践主题分布、按月实践人次与立项数</span></div>
+<div class="grid-3">
+  <div class="card"><div class="card-hd"><h3>案例浏览热度 TOP 6</h3></div><div class="card-bd"><div class="chart" id="c6"></div></div></div>
+  <div class="card"><div class="card-hd"><h3>实践主题分布</h3></div><div class="card-bd"><div class="chart" id="c7"></div></div></div>
+  <div class="card"><div class="card-hd"><h3>按月实践人次与立项数</h3></div><div class="card-bd"><div class="chart" id="c8"></div></div></div>
+</div>
+
+<script>
+const isSchool = document.documentElement.dataset.role === 'school';
+const K = [
+  ['参与学院数', isSchool ? '27' : '1', '个', 'building-2', '#2563EB'], ['学生覆盖率', isSchool ? '68.4' : '74.2', '%', 'users', '#16A34A'],
+  ['基地总数', isSchool ? '286' : '18', '个', 'map-pinned', '#7C3AED'], ['参与团队数', isSchool ? '312' : '36', '个', 'users', '#D97706'],
+  ['立项项目总数', isSchool ? '1,286' : '142', '项', 'folder-check', '#0891B2'], ['优秀案例数', isSchool ? '312' : '28', '个', 'award', '#C8102E']
+];
+document.getElementById('kpis').innerHTML = K.map(k => `<div class="stat"><span class="flex gap-8 l"><i data-lucide="${k[3]}" style="color:${k[4]}"></i>${k[0]}</span><div class="v num">${k[1]}<small>${k[2]}</small></div><span class="trend">较上学年 ↑ ${(Math.random() * 10 + 2).toFixed(1)}%</span></div>`).join('');
+
+const C = ['#2563EB', '#16A34A', '#F59E0B', '#C8102E', '#7C3AED', '#0891B2', '#F97316', '#14B8A6'];
+const axis = { axisLine: { lineStyle: { color: '#CBD5E1' } }, axisLabel: { color: '#64748B', fontSize: 11 }, splitLine: { lineStyle: { color: '#F1F5F9' } } };
+const chart = (id, opt) => echarts.init(document.getElementById(id)).setOption(Object.assign({ color: C, tooltip: {} }, opt));
+const s = isSchool ? 1 : 0.15;
+
+chart('c1', { grid: { left: 110, right: 20, top: 10, bottom: 20 }, tooltip: { trigger: 'axis' },
+  xAxis: { type: 'value', ...axis }, yAxis: { type: 'category', ...axis, data: ['延安革命纪念馆', '嘉兴南湖纪念馆', '十八洞村', '岳麓山·橘子洲', '袁隆平水稻中心', '雷锋纪念馆', '湖南省博物馆', '韶山纪念馆'] },
+  series: [{ type: 'bar', barWidth: 12, data: [620, 680, 760, 860, 880, 980, 1050, 1260].map(v => Math.round(v * s)), itemStyle: { borderRadius: [0, 6, 6, 0], color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#93C5FD' }, { offset: 1, color: '#2563EB' }]) } }] });
+chart('c2', { series: [{ type: 'gauge', startAngle: 210, endAngle: -30, progress: { show: true, width: 16, itemStyle: { color: '#16A34A' } }, axisLine: { lineStyle: { width: 16 } }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, pointer: { show: false },
+  detail: { formatter: '{value}%', fontSize: 30, offsetCenter: [0, 0], color: '#111827' }, title: { offsetCenter: [0, '32%'], color: '#64748B' }, data: [{ value: isSchool ? 76.2 : 76.1, name: isSchool ? '已结项 980 / 立项 1,286' : '已结项 108 / 立项 142' }] }] });
+chart('c3', { tooltip: { trigger: 'item' }, legend: { type: 'scroll', bottom: 0, textStyle: { fontSize: 11 } },
+  series: [{ type: 'pie', radius: ['42%', '68%'], center: ['50%', '44%'], itemStyle: { borderColor: '#fff', borderWidth: 2 }, label: { show: false },
+    data: [['革命文化', 46], ['乡村振兴', 42], ['大国重器', 35], ['传统文化', 31], ['绿色发展', 26], ['科学家精神', 22], ['其他', 84]].map(d => ({ name: d[0], value: d[1] })) }] });
+const cols = ['计算机', '机械', '马院', '经管', '法学', '医学', '公管', '文学'];
+chart('c4', { tooltip: { trigger: 'axis' }, legend: { right: 0, top: 0 }, grid: { left: 44, right: 44, top: 36, bottom: 24 },
+  xAxis: { type: 'category', ...axis, data: cols }, yAxis: [{ type: 'value', name: '参与率%', ...axis, max: 100 }, { type: 'value', name: '时长(h)', ...axis, splitLine: { show: false } }],
+  series: [{ name: '学生参与率', type: 'bar', barWidth: 16, data: [74, 69, 82, 63, 58, 71, 66, 60], itemStyle: { borderRadius: [4, 4, 0, 0] } },
+    { name: '人均实践时长', type: 'line', yAxisIndex: 1, smooth: true, data: [32, 36, 41, 28, 26, 38, 30, 27], itemStyle: { color: '#F97316' } }] });
+chart('c5', { tooltip: { trigger: 'axis' }, grid: { left: 40, right: 16, top: 20, bottom: 24 }, xAxis: { type: 'category', ...axis, data: cols }, yAxis: { type: 'value', ...axis },
+  series: [{ type: 'bar', barWidth: 22, data: [28, 34, 41, 30, 18, 25, 22, 26], itemStyle: { color: '#C8102E', borderRadius: [4, 4, 0, 0] }, label: { show: true, position: 'top', fontSize: 11 } }] });
+chart('c6', { grid: { left: 140, right: 30, top: 10, bottom: 20 }, tooltip: { trigger: 'axis' }, xAxis: { type: 'value', ...axis },
+  yAxis: { type: 'category', ...axis, data: ['禾下乘凉梦', '算力强国', '走进灯塔工厂', '红色足迹·韶山', '十八洞村回访', '余村绿色发展'] },
+  series: [{ type: 'bar', barWidth: 12, data: [1980, 2120, 2410, 2350, 2980, 3260], itemStyle: { color: '#7C3AED', borderRadius: [0, 6, 6, 0] } }] });
+chart('c7', { tooltip: { trigger: 'item' }, series: [{ type: 'pie', roseType: 'radius', radius: ['18%', '72%'], itemStyle: { borderRadius: 4 }, label: { fontSize: 11 },
+  data: [['乡村振兴', 62], ['革命文化', 54], ['大国重器', 41], ['社区服务', 36], ['绿色发展', 30], ['健康中国', 22]].map(d => ({ name: d[0], value: d[1] })) }] });
+chart('c8', { tooltip: { trigger: 'axis' }, legend: { right: 0, top: 0 }, grid: { left: 44, right: 40, top: 36, bottom: 24 },
+  xAxis: { type: 'category', ...axis, data: ['11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月'] },
+  yAxis: [{ type: 'value', ...axis }, { type: 'value', ...axis, splitLine: { show: false } }],
+  series: [{ name: '实践人次', type: 'line', smooth: true, areaStyle: { color: 'rgba(37,99,235,.08)' }, data: [620, 540, 1820, 960, 480, 720, 920, 1580, 3240, 2410, 860, 1120].map(v => Math.round(v * s)) },
+    { name: '立项数', type: 'line', yAxisIndex: 1, smooth: true, data: [42, 30, 168, 60, 38, 52, 76, 210, 280, 120, 64, 88].map(v => Math.round(v * s)) }] });
+</script>

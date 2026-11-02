@@ -1,0 +1,235 @@
+---
+title: 基地检索
+layout: student
+menu: base-list
+crumb: 首页 / 基地检索
+inject: data
+---
+<style>
+.search-hero{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:16px}
+.search-hero .big{display:flex;width:520px;height:44px;border:2px solid var(--primary);border-radius:10px;overflow:hidden;background:#fff}
+.search-hero .big input{flex:1;border:none;outline:none;padding:0 14px;font-size:14px}
+.search-hero .big button{width:96px;border:none;background:var(--primary);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.result-bar{display:flex;align-items:center;justify-content:space-between;margin:18px 0 14px}
+.result-bar b{color:var(--primary)}
+.sorts{display:flex;gap:18px;font-size:13px;color:var(--text-2)}
+.sorts a{cursor:pointer}
+.sorts a.on{color:var(--primary);font-weight:600}
+.base-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.base-card{background:#fff;border-radius:12px;overflow:hidden;border:1px solid #ECEEF2;transition:.25s;display:flex;flex-direction:column}
+.base-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(16,24,40,.1)}
+.base-card .cover{position:relative;height:168px}
+.base-card .cover img{width:100%;height:100%}
+.base-card .fav{position:absolute;right:12px;top:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.9);display:grid;place-items:center;cursor:pointer;color:var(--text-3);transition:.2s}
+.base-card .fav.on{color:#F59E0B}
+.base-card .fav.on svg{fill:#F59E0B}
+.base-card .bd{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+.base-card h3{font-size:16px;font-weight:600}
+.base-card .meta{display:flex;gap:14px;color:var(--text-3);font-size:12px}
+.base-card .meta span{display:flex;align-items:center;gap:4px}
+.base-card .meta svg{width:13px;height:13px}
+.base-card .ft{display:flex;gap:8px;margin-top:auto;padding-top:6px}
+.base-card .ft .btn{flex:1}
+</style>
+
+<div class="search-hero">
+  <div><h1 style="font-size:22px">实践基地检索</h1><p class="muted small">已收录我校签约实践基地 286 个，覆盖 24 个省份 · 数据实时同步第二课堂社会实践库</p></div>
+  <div class="big"><input id="kw" placeholder="输入基地名称、地点、主题关键词"><button onclick="render()"><i data-lucide="search"></i>搜索</button></div>
+</div>
+
+<div class="card card-bd" style="padding:8px 20px">
+  <div class="filter-row"><span class="k">专题标签</span><div class="chips" id="catChips" data-chips="multi"></div></div>
+  <div class="filter-row"><span class="k">基地级别</span><div class="chips" id="lvChips" data-chips="single"><span class="chip on" data-v="">全部</span><span class="chip" data-v="校级">校级基地</span><span class="chip" data-v="院级">院级基地</span></div></div>
+  <div class="filter-row"><span class="k">省份城市</span><div class="chips" id="provChips" data-chips="single"><span class="chip on" data-v="">全部</span></div></div>
+  <div class="filter-row"><span class="k">接待人数</span><div class="chips" id="capChips" data-chips="single"><span class="chip on" data-v="0">不限</span><span class="chip" data-v="30">30 人以上</span><span class="chip" data-v="50">50 人以上</span><span class="chip" data-v="80">80 人以上</span></div></div>
+</div>
+
+<div class="result-bar">
+  <span>共找到 <b id="total">0</b> 个实践基地</span>
+  <div class="flex gap-24">
+    <div class="sorts" id="sorts"><a class="on" data-k="id">综合排序</a><a data-k="persons">接待人次</a><a data-k="cap">接待容量</a></div>
+    <a class="btn btn-sm" href="map.html"><i data-lucide="map"></i>在地图中查看</a>
+  </div>
+</div>
+<div class="base-grid" id="grid"></div>
+<div class="pager"><span class="total">每页 12 条</span><a><i data-lucide="chevron-left"></i></a><a class="on">1</a><a>2</a><a>3</a><a><i data-lucide="chevron-right"></i></a></div>
+
+<script>
+// 筛选条件渲染
+document.getElementById('catChips').innerHTML = CATS.map((c, i) => `<span class="chip" data-v="${i}" style="--c:${c.color}"><i class="dot"></i>${c.name}</span>`).join('');
+const provs = [...new Set(BASES.map(b => b.prov))];
+document.getElementById('provChips').innerHTML += provs.map(p => `<span class="chip" data-v="${p}">${p}</span>`).join('');
+let sortKey = 'id';
+document.getElementById('sorts').onclick = e => {
+  if (!e.target.dataset.k) return;
+  document.querySelectorAll('#sorts a').forEach(a => a.classList.remove('on'));
+  e.target.classList.add('on'); sortKey = e.target.dataset.k; render();
+};
+const pick = id => [...document.querySelectorAll('#' + id + ' .chip.on')].map(c => c.dataset.v);
+
+function render(){
+  const cats = pick('catChips').map(Number), lv = pick('lvChips')[0] || '', prov = pick('provChips')[0] || '';
+  const cap = +(pick('capChips')[0] || 0), q = document.getElementById('kw').value.trim();
+  let list = BASES.filter(b => (!cats.length || cats.includes(b.c)) && (!lv || b.lv === lv) && (!prov || b.prov === prov)
+    && b.cap >= cap && (!q || (b.name + b.city + CATS[b.c].name).includes(q)));
+  if (sortKey !== 'id') list = list.sort((a, b) => b[sortKey] - a[sortKey]);
+  document.getElementById('total').textContent = list.length;
+  document.getElementById('grid').innerHTML = list.slice(0, 12).map(b => `
+    <div class="base-card">
+      <div class="cover"><img data-shot="基地图片" src="${img(b.img, 600, 340)}" alt="${b.name}">
+        <span class="fav" onclick="this.classList.toggle('on');toast(this.classList.contains('on')?'已加入我的收藏':'已取消收藏')"><i data-lucide="star"></i></span></div>
+      <div class="bd">
+        <h3 class="ellipsis">${b.name}</h3>
+        <div class="flex gap-8">${catTag(b.c)}<span class="tag ${b.lv === '校级' ? 'tag-red' : 'tag-blue'}">${b.lv}基地</span></div>
+        <div class="meta"><span><i data-lucide="map-pin"></i>${b.prov} · ${b.city}</span><span><i data-lucide="users"></i>单批 ${b.cap} 人</span><span><i data-lucide="flame"></i>${b.persons} 人次</span></div>
+        <div class="ft"><a class="btn btn-sm btn-primary" href="base-detail.html">查看详情</a></div>
+      </div>
+    </div>`).join('') || '<div class="empty" style="grid-column:span 3">没有符合条件的基地，试试减少筛选条件</div>';
+  refreshIcons();
+}
+document.addEventListener('click', e => { if (e.target.closest('[data-chips] .chip')) setTimeout(render); });
+render();
+</script>
+
+<!-- 内容图灯箱 -->
+<script>
+// 内容图灯箱：点哪张看哪张；同一组可左右切换。关闭大图不离开当前页，也不关掉底下的弹窗。
+(function () {
+  if (document.getElementById('shotViewer')) return;
+  var css = document.createElement('style');
+  css.textContent = ''
+    + 'img[data-shot],[data-shots] img{cursor:zoom-in}'
+    + '.shot-viewer{position:fixed;inset:0;z-index:240;background:rgba(15,23,42,.86);display:none;align-items:center;justify-content:center}'
+    + '.shot-viewer.show{display:flex}'
+    + '.shot-viewer img{flex:0 0 auto;max-width:min(1080px,82vw);max-height:82vh;width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,.45);background:#111827;cursor:default}'
+    + '.shot-viewer .x,.shot-viewer .nav{position:absolute;z-index:2;display:grid;place-items:center;cursor:pointer;color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.28);user-select:none}'
+    + '.shot-viewer .x{right:22px;top:18px;width:36px;height:36px;border-radius:50%}'
+    + '.shot-viewer .nav{top:50%;width:42px;height:64px;margin-top:-32px;border-radius:8px}'
+    + '.shot-viewer .prev{left:18px}.shot-viewer .next{right:18px}'
+    + '.shot-viewer .cap{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#E5E7EB;font-size:13px;letter-spacing:1px;pointer-events:none}';
+  document.head.appendChild(css);
+
+  var box = document.createElement('div');
+  box.className = 'shot-viewer';
+  box.id = 'shotViewer';
+  box.innerHTML = '<span class="x" title="关闭"><i data-lucide="x"></i></span>'
+    + '<span class="nav prev" title="上一张"><i data-lucide="chevron-left"></i></span>'
+    + '<img alt="大图">'
+    + '<span class="nav next" title="下一张"><i data-lucide="chevron-right"></i></span>'
+    + '<span class="cap">图片</span>';
+  document.body.appendChild(box);
+
+  var urls = [], index = 0, label = '图片';
+  var big = box.querySelector('img');
+  var cap = box.querySelector('.cap');
+  var prev = box.querySelector('.prev');
+  var next = box.querySelector('.next');
+
+  function enlarge(src) {
+    var w = /[?&]w=(\d+)/.exec(src);
+    var h = /[?&]h=(\d+)/.exec(src);
+    if (!w) return src;
+    var nw = 1600;
+    var nh = h ? Math.max(1, Math.round(Number(h[1]) * nw / Number(w[1]))) : 0;
+    var out = src.replace(/([?&])w=\d+/, '$1w=' + nw);
+    if (nh) out = out.replace(/([?&])h=\d+/, '$1h=' + nh);
+    return out;
+  }
+  var token = 0;
+  function fit() {
+    if (!big.naturalWidth || !big.naturalHeight) return;
+    var maxW = Math.min(1080, window.innerWidth * 0.82);
+    var maxH = window.innerHeight * 0.82;
+    var scale = Math.min(maxW / big.naturalWidth, maxH / big.naturalHeight);
+    big.style.width = Math.max(1, Math.round(big.naturalWidth * scale)) + 'px';
+    big.style.height = Math.max(1, Math.round(big.naturalHeight * scale)) + 'px';
+  }
+  function paint() {
+    var my = ++token;
+    var thumb = urls[index];
+    var full = enlarge(thumb);
+    function apply(src) {
+      if (my !== token) return;
+      if (big.src === src && big.complete && big.naturalWidth) { fit(); return; }
+      big.onload = function () { if (my === token) fit(); };
+      big.src = src;
+      if (my === token && big.complete && big.naturalWidth) fit();
+    }
+    // 先用页面上已经加载的缩略图撑开大图，再换成更高清的地址
+    apply(thumb);
+    if (full !== thumb) {
+      var pre = new Image();
+      pre.onload = function () { apply(full); };
+      pre.src = full;
+    }
+    cap.textContent = label + ' ' + (index + 1) + ' / ' + urls.length;
+    var single = urls.length < 2;
+    prev.style.display = single ? 'none' : '';
+    next.style.display = single ? 'none' : '';
+  }
+
+  function open(list, i, lab) {
+    urls = list;
+    index = i;
+    label = lab || '图片';
+    paint();
+    box.classList.add('show');
+    if (window.refreshIcons) refreshIcons();
+  }
+  function step(d) {
+    if (urls.length < 2) return;
+    index = (index + d + urls.length) % urls.length;
+    paint();
+  }
+  function close() { box.classList.remove('show'); }
+
+  box.addEventListener('click', function (e) { if (e.target === box) close(); });
+  box.querySelector('.x').addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    close();
+  });
+  prev.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(-1);
+  });
+  next.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(1);
+  });
+
+  function shotFromEvent(e) {
+    var t = e.target;
+    if (!t) return null;
+    if (t.nodeType !== 1) t = t.parentElement;
+    if (!t || !t.closest) return null;
+    var im = t.closest('img');
+    if (!im || im.closest('.shot-viewer')) return null;
+    if (!im.hasAttribute('data-shot') && !im.closest('[data-shots]')) return null;
+    return im;
+  }
+  function onPick(e) {
+    var im = shotFromEvent(e);
+    if (!im) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var group = im.closest('[data-shots]');
+    if (group) {
+      var imgs = Array.prototype.slice.call(group.querySelectorAll('img'));
+      open(imgs.map(function (el) { return el.currentSrc || el.src; }), Math.max(0, imgs.indexOf(im)), group.getAttribute('data-shots') || '图片');
+    } else {
+      open([im.currentSrc || im.src], 0, im.getAttribute('data-shot') || '图片');
+    }
+  }
+  document.addEventListener('click', onPick, true);
+  document.addEventListener('auxclick', onPick, true);
+  document.addEventListener('keydown', function (e) {
+    if (!box.classList.contains('show')) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+  }, true);
+})();
+</script>

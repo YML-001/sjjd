@@ -1,0 +1,66 @@
+---
+title: 第二课堂联动
+layout: admin
+menu: second-classroom
+crumb: 社会实践基地资源库 / 系统 / 第二课堂联动
+---
+<style>
+.sc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.sc{background:#fff;border-radius:12px;border:1px solid #ECEEF2;padding:20px;display:flex;flex-direction:column;gap:10px;transition:.25s}
+.sc:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(16,24,40,.08)}
+.sc .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center}
+.sc .ic svg{width:22px;height:22px}
+.sc h3{font-size:16px}
+.sc p{font-size:12px;color:var(--text-3);flex:1}
+.sc .cnt{font-size:13px;color:var(--text-2)}
+.sc .cnt b{font-size:20px;color:var(--red);margin-right:2px}
+.sync{display:grid;grid-template-columns:1fr 1.4fr;gap:16px;margin-top:16px}
+.flow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0}
+.flow .node{flex:1;text-align:center;padding:16px 10px;border-radius:12px;background:#F8FAFC;border:1px solid #ECEEF2}
+.flow .node b{display:block;font-size:14px;margin-top:6px}
+.flow .node small{color:var(--text-3);font-size:12px}
+.flow .node svg{width:26px;height:26px}
+.flow .arr{color:#94A3B8;display:flex;flex-direction:column;align-items:center;font-size:11px}
+</style>
+
+<div class="page-hd">
+  <div><h1>第二课堂业务联动</h1><p>资源库全部业务数据来源于第二课堂社会实践库，不重复录入；可一键跳转第二课堂原有审核与管理页面</p></div>
+</div>
+
+<div class="sc-grid">
+  <div class="sc"><span class="ic" style="background:#EFF4FF;color:#2563EB"><i data-lucide="clipboard-check"></i></span><h3>项目审核</h3><p>社会实践项目立项申报审核</p><div class="cnt"><b class="num" data-only="school">36</b><b class="num" data-only="college">7</b>项待审核</div><button class="btn btn-primary btn-sm" onclick="go('项目审核')">前往第二课堂<i data-lucide="external-link"></i></button></div>
+  <div class="sc"><span class="ic" style="background:#EAF7EE;color:#16A34A"><i data-lucide="folder-check"></i></span><h3>结项审核</h3><p>实践成果与结项材料审核</p><div class="cnt"><b class="num" data-only="school">58</b><b class="num" data-only="college">9</b>项待审核</div><button class="btn btn-primary btn-sm" onclick="go('结项审核')">前往第二课堂<i data-lucide="external-link"></i></button></div>
+  <div class="sc"><span class="ic" style="background:#FEF4E4;color:#D97706"><i data-lucide="badge-plus"></i></span><h3>学分认定</h3><p>社会实践第二课堂学分认定</p><div class="cnt"><b class="num" data-only="school">124</b><b class="num" data-only="college">18</b>人待认定</div><button class="btn btn-primary btn-sm" onclick="go('学分认定')">前往第二课堂<i data-lucide="external-link"></i></button></div>
+  <div class="sc"><span class="ic" style="background:#FDEDEF;color:#C8102E"><i data-lucide="trophy"></i></span><h3>评优</h3><p>优秀团队、个人与项目评选</p><div class="cnt"><b class="num" data-only="school">2</b><b class="num" data-only="college">1</b>场评选进行中</div><button class="btn btn-primary btn-sm" onclick="go('评优')">前往第二课堂<i data-lucide="external-link"></i></button></div>
+  <div class="sc"><span class="ic" style="background:#F3E8FF;color:#7C3AED"><i data-lucide="shield-check"></i></span><h3>诚信管理</h3><p>实践过程诚信记录与处理</p><div class="cnt"><b class="num">3</b>条待处理</div><button class="btn btn-primary btn-sm" onclick="go('诚信管理')">前往第二课堂<i data-lucide="external-link"></i></button></div>
+</div>
+
+<div class="sync">
+  <div class="card">
+    <div class="card-hd"><h3>数据同步状态</h3><span class="tag tag-green"><i data-lucide="circle-check"></i>运行正常</span></div>
+    <div class="card-bd desc" style="grid-template-columns:1fr">
+      <div><span class="k">数据来源</span><span>第二课堂 · 社会实践库</span></div>
+      <div><span class="k">同步方式</span><span>每日 02:00 增量同步 + 关键事件实时推送</span></div>
+      <div><span class="k">最近同步</span><span class="num">2026-10-26 02:00:12（耗时 48 秒）</span></div>
+      <div><span class="k">同步数据</span><span>项目 1,286 · 结项 980 · 评优 312 · 学生 18,642</span></div>
+      <div><span class="k">消息推送</span><span>资源更新、立项进度 → 第二课堂阅办消息</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><h3>数据联动关系</h3></div>
+    <div class="card-bd">
+      <div class="flow">
+        <div class="node"><i data-lucide="database" style="color:#0D9488"></i><b>第二课堂</b><small>申报 / 立项 / 结项 / 评优 / 学分</small></div>
+        <div class="arr"><i data-lucide="arrow-right"></i>读取数据</div>
+        <div class="node"><i data-lucide="map-pinned" style="color:#2563EB"></i><b>基地资源库</b><small>榜单 / 看板 / 案例池 / AI</small></div>
+        <div class="arr"><i data-lucide="arrow-right"></i>消息同步</div>
+        <div class="node"><i data-lucide="bell" style="color:#D97706"></i><b>阅办消息</b><small>学生 / 教师 / 管理员</small></div>
+      </div>
+      <div class="alert alert-info mt-12"><i data-lucide="info"></i>学生端可从地图、基地、案例直接跳转第二课堂「项目申报」「我的项目」「实践资源」页面。</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function go(name){ toast('即将在新窗口打开第二课堂 · ' + name, 'external-link'); }
+</script>

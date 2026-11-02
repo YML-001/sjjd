@@ -1,0 +1,12 @@
+# 需求原稿、截图和本地临时文件，不纳入原型仓库
+*.docx
+*.jpg
+*.jpeg
+.~*
+.playwright-cli/
+
+# 密钥与凭证
+.env
+.env.*
+*.pem
+credentials.json

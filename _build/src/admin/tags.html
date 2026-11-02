@@ -1,0 +1,67 @@
+---
+title: 专题标签库
+layout: admin
+menu: tags
+only: school
+crumb: 社会实践基地资源库 / 资源配置 / 专题标签库
+inject: data
+---
+<style>
+.sw-c{display:inline-block;width:18px;height:18px;border-radius:5px;background:var(--c);vertical-align:middle;box-shadow:inset 0 0 0 2px rgba(255,255,255,.4)}
+.drag{color:#CBD5E1;cursor:grab}
+.colors{display:flex;flex-wrap:wrap;gap:8px}
+.colors span{width:28px;height:28px;border-radius:6px;cursor:pointer;border:2px solid transparent}
+.colors span.on{border-color:#111827}
+</style>
+
+<div class="page-hd">
+  <div><h1>专题标签库</h1><p>标签用于数字地图筛选、基地与案例分类、AI 匹配计算；停用后不再出现在筛选项中，历史数据保留</p></div>
+  <div class="actions"><button class="btn" onclick="openModal('batchM')"><i data-lucide="tags"></i>批量打标签</button><button class="btn btn-primary" onclick="openModal('addM')"><i data-lucide="plus"></i>新增标签</button></div>
+</div>
+
+<div class="card">
+  <div class="card-hd">
+    <div class="filter-bar"><div class="input-ic" style="width:240px"><i data-lucide="search"></i><input class="input" placeholder="搜索标签名称"></div><select class="select"><option>全部状态</option><option>启用</option><option>停用</option></select></div>
+    <span class="muted small">共 20 个标签 · 拖动排序决定地图图例顺序</span>
+  </div>
+  <table class="table">
+    <thead><tr><th style="width:40px"></th><th style="width:60px">排序</th><th>标签名称</th><th>色值</th><th class="r">关联基地</th><th class="r">关联案例</th><th>应用范围</th><th>启用</th><th>操作</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<div class="modal-mask" id="addM">
+  <div class="modal">
+    <div class="modal-hd">新增专题标签<span class="x" onclick="closeModal('addM')"><i data-lucide="x"></i></span></div>
+    <div class="modal-bd">
+      <div class="field mb-16"><label><span class="req">*</span>标签名称</label><input class="input" placeholder="如：海洋强国"></div>
+      <div class="field mb-16"><label><span class="req">*</span>图例色值</label><div class="colors" data-chips="single" id="colors"></div></div>
+      <div class="field mb-16"><label>标签说明</label><textarea class="textarea" placeholder="用于帮助学生理解该主题的实践方向"></textarea></div>
+      <div class="field"><label>应用范围</label><div class="flex gap-16"><label class="flex gap-4" style="font-weight:400"><input type="checkbox" checked>地图筛选</label><label class="flex gap-4" style="font-weight:400"><input type="checkbox" checked>AI 匹配</label><label class="flex gap-4" style="font-weight:400"><input type="checkbox" checked>案例分类</label></div></div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('addM')">取消</button><button class="btn btn-primary" onclick="closeModal('addM');toast('标签已新增，操作已记录日志')">保存</button></div>
+  </div>
+</div>
+
+<div class="modal-mask" id="batchM">
+  <div class="modal" style="width:600px">
+    <div class="modal-hd">批量打标签<span class="x" onclick="closeModal('batchM')"><i data-lucide="x"></i></span></div>
+    <div class="modal-bd">
+      <div class="field mb-16"><label>打标对象</label><div class="chips" data-chips="single"><span class="chip on">实践基地</span><span class="chip">优秀案例</span></div></div>
+      <div class="field mb-16"><label>选择对象（已选 3 个）</label><div class="flex gap-8 wrap-f"><span class="tag tag-blue">三一重工“灯塔工厂”</span><span class="tag tag-blue">中联重科智能制造产业园</span><span class="tag tag-blue">港珠澳大桥建设展示中心</span><a class="btn-text small">+ 选择</a></div></div>
+      <div class="field"><label>添加标签</label><div class="chips" data-chips="multi"><span class="chip on">大国重器</span><span class="chip">工业文化</span><span class="chip">行业认知</span><span class="chip">攀高攻坚</span></div></div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('batchM')">取消</button><button class="btn btn-primary" onclick="closeModal('batchM');toast('已为 3 个基地添加标签')">确认</button></div>
+  </div>
+</div>
+
+<script>
+document.getElementById('rows').innerHTML = CATS.map((c, i) => { const nb = BASES.filter(b => b.c === i).length; return `<tr>
+  <td><i data-lucide="grip-vertical" class="drag"></i></td><td class="num muted">${i + 1}</td>
+  <td>${catTag(i)}</td><td><span class="sw-c" style="--c:${c.color}"></span> <span class="num small muted">${c.color}</span></td>
+  <td class="r num">${nb * 8 + 3}</td><td class="r num">${nb * 9 + 2}</td>
+  <td><span class="tag">地图筛选</span> <span class="tag">AI 匹配</span></td>
+  <td><span class="switch ${i === 16 ? '' : 'on'}" onclick="this.classList.toggle('on');toast(this.classList.contains('on')?'标签已启用':'标签已停用')"></span></td>
+  <td><div class="ops"><a class="btn-text" onclick="openModal('addM')">编辑</a><a class="btn-text" href="bases.html">查看关联</a></div></td></tr>`; }).join('');
+document.getElementById('colors').innerHTML = CATS.slice(0, 14).map((c, i) => `<span class="chip ${i === 0 ? 'on' : ''}" style="background:${c.color};padding:0;width:28px;border-radius:6px"></span>`).join('');
+</script>

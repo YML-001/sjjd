@@ -1,0 +1,252 @@
+---
+title: 第二课堂项目申报
+layout: student
+menu: project-draft
+crumb: 首页 / 第二课堂 / 社会实践项目申报（草稿）
+---
+<style>
+.sc-banner{display:flex;align-items:center;gap:14px;padding:14px 20px;border-radius:12px;background:linear-gradient(90deg,#FFF7ED,#FFFBEB);border:1px solid #FDE7C7;margin-bottom:18px}
+.sc-banner .ic{width:40px;height:40px;border-radius:10px;background:#F97316;color:#fff;display:grid;place-items:center}
+.sc-banner b{font-size:15px}
+.steps{display:flex;margin-bottom:20px}
+.steps div{flex:1;display:flex;align-items:center;gap:10px;color:var(--text-3);font-size:14px}
+.steps div::after{content:"";flex:1;height:1px;background:var(--border);margin:0 12px}
+.steps div:last-child::after{display:none}
+.steps i{width:26px;height:26px;border-radius:50%;border:1px solid var(--border);display:grid;place-items:center;font-style:normal;font-size:13px}
+.steps .on{color:var(--primary);font-weight:600}
+.steps .on i{background:var(--primary);border-color:var(--primary);color:#fff}
+.form-sec{margin-bottom:6px}
+.form-sec h4{font-size:15px;margin:6px 0 16px;padding-left:10px;border-left:3px solid var(--primary)}
+.picked{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px dashed #C7D7FE;border-radius:8px;background:#F8FAFF}
+.picked img{width:64px;height:44px;border-radius:6px}
+/* AI 推荐浮层卡片 */
+.ai-card{position:fixed;right:24px;top:84px;width:400px;z-index:80;background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(30,27,75,.25);overflow:hidden;transform:translateX(440px);transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.ai-card.show{transform:none}
+.ai-card .hd{padding:16px 18px;color:#fff;background:linear-gradient(120deg,#3730A3,#2563EB);display:flex;justify-content:space-between;align-items:flex-start}
+.ai-card .hd b{font-size:16px;display:flex;align-items:center;gap:6px}
+.ai-card .hd p{font-size:12px;opacity:.8;margin-top:4px}
+.ai-card .hd .x{cursor:pointer;opacity:.8}
+.ai-card .bd{padding:14px 18px;max-height:60vh;overflow:auto}
+.ai-card h5{font-size:13px;color:var(--text-3);font-weight:500;margin:4px 0 8px}
+.ai-item{display:flex;gap:10px;align-items:center;padding:10px;border-radius:10px;border:1px solid #EEF1F5;margin-bottom:8px}
+.ai-item img{width:56px;height:44px;border-radius:6px}
+.ai-item .t{flex:1;min-width:0}
+.ai-item .t b{font-size:13px;font-weight:500;display:block}
+.ai-item .t small{font-size:12px;color:#4F46E5}
+.ai-card .ft{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
+.ai-card .ft .btn{flex:1}
+.ai-fab{position:fixed;right:24px;top:96px;z-index:79;display:none;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;color:#fff;background:linear-gradient(120deg,#4F46E5,#2563EB);box-shadow:0 8px 20px rgba(79,70,229,.35);cursor:pointer}
+.ai-fab.show{display:flex}
+.proto-back{bottom:84px}
+html,body{height:100%;overflow:hidden}
+.admin-main{display:flex;flex-direction:column;height:100vh;padding-bottom:0}
+.admin-main>.crumb,.footer-bar{flex:none}
+.page-scroll{flex:1;min-height:0;overflow:auto;padding-bottom:16px}
+.footer-bar{z-index:30;margin:0 -24px 0;padding:14px 24px;background:#fff;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+</style>
+
+<div class="page-scroll">
+<div class="sc-banner">
+  <span class="ic"><i data-lucide="layers"></i></span>
+  <div><b>第二课堂 · 社会实践项目申报</b><div class="muted small">本页为第二课堂系统页面，资源库提供 AI 推荐卡片嵌入；草稿自动保存于 2026-10-26 21:46</div></div>
+  <a class="btn btn-sm" style="margin-left:auto" href="map.html"><i data-lucide="map"></i>返回资源库地图</a>
+</div>
+
+<div class="card card-bd">
+  <div class="steps"><div class="on"><i>1</i>基本信息</div><div><i>2</i>团队成员</div><div><i>3</i>实践计划</div><div><i>4</i>提交审核</div></div>
+
+  <div class="form-sec">
+    <h4>项目基本信息</h4>
+    <div class="form-grid">
+      <div class="field"><label><span class="req">*</span>项目名称</label><input class="input" value="乡村振兴背景下湘西数字助农调研"></div>
+      <div class="field"><label><span class="req">*</span>项目类别</label><select class="select"><option>社会实践 · 专项调研</option><option>社会实践 · 志愿服务</option></select></div>
+      <div class="field"><label><span class="req">*</span>实践主题</label><select class="select"><option>脱贫攻坚乡村振兴</option><option>大国重器</option><option>革命文化</option></select></div>
+      <div class="field"><label><span class="req">*</span>意向实践地点</label><input class="input" value="湖南省湘西州"></div>
+      <div class="field span-2"><label><span class="req">*</span>实践基地</label>
+        <div class="picked" id="picked"><span class="muted"><i data-lucide="map-pin" style="vertical-align:-3px"></i> 尚未选择基地，可从右侧 AI 推荐中一键选用，或 <a class="btn-text" href="base-list.html">前往基地库选择</a></span></div></div>
+      <div class="field"><label><span class="req">*</span>指导教师</label><input class="input" value="陈思远（马克思主义学院）"></div>
+      <div class="field"><label>计划实践时间</label><input class="input" value="2027-01-10 至 2027-01-20"></div>
+      <div class="field span-2"><label><span class="req">*</span>项目简介与实践方案</label><textarea class="textarea" id="plan" style="min-height:150px" placeholder="请描述项目背景、目标、实践内容与预期成果"></textarea><div class="hint">可在 AI 推荐卡片中「复制申报模板」，自动填入同主题优秀案例的申报框架</div></div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="footer-bar">
+  <button class="btn" onclick="toast('草稿已保存')">保存草稿</button>
+  <button class="btn btn-primary" onclick="toast('进入下一步：团队成员')">下一步</button>
+</div>
+
+<!-- AI 推荐卡片：进入申报草稿页自动弹出 -->
+<div class="ai-card" id="aiCard">
+  <div class="hd"><div><b><i data-lucide="sparkles"></i>AI 为你推荐实践资源</b><p>根据「乡村振兴 · 湖南湘西 · 软件工程」为你匹配</p></div><span class="x" onclick="toggleAi(false)"><i data-lucide="minus"></i></span></div>
+  <div class="bd">
+    <h5>推荐基地</h5>
+    <div class="ai-item"><img data-shot="基地图片" src="{{img:terrace:120x90}}" alt=""><div class="t"><b>十八洞村乡村振兴示范点</b><small>匹配 96% · 主题一致、地点吻合</small></div><button class="btn btn-sm btn-primary" onclick="useBase('十八洞村乡村振兴示范点','{{img:terrace:120x90}}')">选用</button></div>
+    <div class="ai-item"><img data-shot="基地图片" src="{{img:hands:120x90}}" alt=""><div class="t"><b>湘西州民族团结进步教育基地</b><small>匹配 88% · 地点吻合、主题相近</small></div><button class="btn btn-sm" onclick="useBase('湘西州民族团结进步教育基地','{{img:hands:120x90}}')">选用</button></div>
+    <div class="ai-item"><img data-shot="基地图片" src="{{img:veg:120x90}}" alt=""><div class="t"><b>浏阳大围山镇乡村振兴点</b><small>匹配 82% · 主题一致</small></div><button class="btn btn-sm" onclick="useBase('浏阳大围山镇乡村振兴点','{{img:veg:120x90}}')">选用</button></div>
+    <h5 class="mt-12">同主题优秀案例</h5>
+    <div class="ai-item"><img data-shot="案例封面" src="{{img:terrace:120x90}}" alt=""><div class="t"><b>十八洞村精准扶贫十年回访与产业振兴调研</b><small>经济管理学院 · 国家级立项</small></div><a class="btn btn-sm" href="case-detail.html?id=2">查看</a></div>
+  </div>
+  <div class="ft">
+    <button class="btn btn-sm" onclick="fillTpl()"><i data-lucide="copy"></i>复制申报模板</button>
+    <button class="btn btn-sm" onclick="toast('已为你重新匹配','sparkles')"><i data-lucide="refresh-cw"></i>重新匹配</button>
+    <button class="btn btn-sm" onclick="toggleAi(false);toast('已反馈不感兴趣')"><i data-lucide="thumbs-down"></i>不感兴趣</button>
+  </div>
+</div>
+<div class="ai-fab" id="aiFab" onclick="toggleAi(true)"><i data-lucide="sparkles"></i>AI 推荐</div>
+
+<script>
+function toggleAi(show){ document.getElementById('aiCard').classList.toggle('show', show); document.getElementById('aiFab').classList.toggle('show', !show); }
+setTimeout(() => toggleAi(true), 600);
+function useBase(name, src){
+  document.getElementById('picked').innerHTML = `<img data-shot="基地图片" src="${src}" alt=""><div style="flex:1"><b>${name}</b><div class="muted small">已从 AI 推荐中选用，将写入本次第二课堂申报</div></div>`;
+  toast('已选用：' + name);
+}
+function fillTpl(){
+  document.getElementById('plan').value = '【项目背景】结合乡村振兴战略，聚焦……\n【实践目标】1. 调研……；2. 形成……\n【实践内容】第一阶段：前期调研与对接；第二阶段：驻村实践；第三阶段：成果总结与转化\n【预期成果】调研报告 1 份、宣传视频 1 部、对策建议 3 条\n【安全保障】……';
+  toast('已填入同主题优秀案例的申报框架');
+}
+</script>
+
+<!-- 内容图灯箱 -->
+<script>
+// 内容图灯箱：点哪张看哪张；同一组可左右切换。关闭大图不离开当前页，也不关掉底下的弹窗。
+(function () {
+  if (document.getElementById('shotViewer')) return;
+  var css = document.createElement('style');
+  css.textContent = ''
+    + 'img[data-shot],[data-shots] img{cursor:zoom-in}'
+    + '.shot-viewer{position:fixed;inset:0;z-index:240;background:rgba(15,23,42,.86);display:none;align-items:center;justify-content:center}'
+    + '.shot-viewer.show{display:flex}'
+    + '.shot-viewer img{flex:0 0 auto;max-width:min(1080px,82vw);max-height:82vh;width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,.45);background:#111827;cursor:default}'
+    + '.shot-viewer .x,.shot-viewer .nav{position:absolute;z-index:2;display:grid;place-items:center;cursor:pointer;color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.28);user-select:none}'
+    + '.shot-viewer .x{right:22px;top:18px;width:36px;height:36px;border-radius:50%}'
+    + '.shot-viewer .nav{top:50%;width:42px;height:64px;margin-top:-32px;border-radius:8px}'
+    + '.shot-viewer .prev{left:18px}.shot-viewer .next{right:18px}'
+    + '.shot-viewer .cap{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#E5E7EB;font-size:13px;letter-spacing:1px;pointer-events:none}';
+  document.head.appendChild(css);
+
+  var box = document.createElement('div');
+  box.className = 'shot-viewer';
+  box.id = 'shotViewer';
+  box.innerHTML = '<span class="x" title="关闭"><i data-lucide="x"></i></span>'
+    + '<span class="nav prev" title="上一张"><i data-lucide="chevron-left"></i></span>'
+    + '<img alt="大图">'
+    + '<span class="nav next" title="下一张"><i data-lucide="chevron-right"></i></span>'
+    + '<span class="cap">图片</span>';
+  document.body.appendChild(box);
+
+  var urls = [], index = 0, label = '图片';
+  var big = box.querySelector('img');
+  var cap = box.querySelector('.cap');
+  var prev = box.querySelector('.prev');
+  var next = box.querySelector('.next');
+
+  function enlarge(src) {
+    var w = /[?&]w=(\d+)/.exec(src);
+    var h = /[?&]h=(\d+)/.exec(src);
+    if (!w) return src;
+    var nw = 1600;
+    var nh = h ? Math.max(1, Math.round(Number(h[1]) * nw / Number(w[1]))) : 0;
+    var out = src.replace(/([?&])w=\d+/, '$1w=' + nw);
+    if (nh) out = out.replace(/([?&])h=\d+/, '$1h=' + nh);
+    return out;
+  }
+  var token = 0;
+  function fit() {
+    if (!big.naturalWidth || !big.naturalHeight) return;
+    var maxW = Math.min(1080, window.innerWidth * 0.82);
+    var maxH = window.innerHeight * 0.82;
+    var scale = Math.min(maxW / big.naturalWidth, maxH / big.naturalHeight);
+    big.style.width = Math.max(1, Math.round(big.naturalWidth * scale)) + 'px';
+    big.style.height = Math.max(1, Math.round(big.naturalHeight * scale)) + 'px';
+  }
+  function paint() {
+    var my = ++token;
+    var thumb = urls[index];
+    var full = enlarge(thumb);
+    function apply(src) {
+      if (my !== token) return;
+      if (big.src === src && big.complete && big.naturalWidth) { fit(); return; }
+      big.onload = function () { if (my === token) fit(); };
+      big.src = src;
+      if (my === token && big.complete && big.naturalWidth) fit();
+    }
+    // 先用页面上已经加载的缩略图撑开大图，再换成更高清的地址
+    apply(thumb);
+    if (full !== thumb) {
+      var pre = new Image();
+      pre.onload = function () { apply(full); };
+      pre.src = full;
+    }
+    cap.textContent = label + ' ' + (index + 1) + ' / ' + urls.length;
+    var single = urls.length < 2;
+    prev.style.display = single ? 'none' : '';
+    next.style.display = single ? 'none' : '';
+  }
+
+  function open(list, i, lab) {
+    urls = list;
+    index = i;
+    label = lab || '图片';
+    paint();
+    box.classList.add('show');
+    if (window.refreshIcons) refreshIcons();
+  }
+  function step(d) {
+    if (urls.length < 2) return;
+    index = (index + d + urls.length) % urls.length;
+    paint();
+  }
+  function close() { box.classList.remove('show'); }
+
+  box.addEventListener('click', function (e) { if (e.target === box) close(); });
+  box.querySelector('.x').addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    close();
+  });
+  prev.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(-1);
+  });
+  next.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(1);
+  });
+
+  function shotFromEvent(e) {
+    var t = e.target;
+    if (!t) return null;
+    if (t.nodeType !== 1) t = t.parentElement;
+    if (!t || !t.closest) return null;
+    var im = t.closest('img');
+    if (!im || im.closest('.shot-viewer')) return null;
+    if (!im.hasAttribute('data-shot') && !im.closest('[data-shots]')) return null;
+    return im;
+  }
+  function onPick(e) {
+    var im = shotFromEvent(e);
+    if (!im) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var group = im.closest('[data-shots]');
+    if (group) {
+      var imgs = Array.prototype.slice.call(group.querySelectorAll('img'));
+      open(imgs.map(function (el) { return el.currentSrc || el.src; }), Math.max(0, imgs.indexOf(im)), group.getAttribute('data-shots') || '图片');
+    } else {
+      open([im.currentSrc || im.src], 0, im.getAttribute('data-shot') || '图片');
+    }
+  }
+  document.addEventListener('click', onPick, true);
+  document.addEventListener('auxclick', onPick, true);
+  document.addEventListener('keydown', function (e) {
+    if (!box.classList.contains('show')) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+  }, true);
+})();
+</script>

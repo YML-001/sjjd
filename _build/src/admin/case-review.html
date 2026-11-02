@@ -1,0 +1,318 @@
+---
+title: 案例终审
+layout: admin
+menu: case-pool
+crumb: 社会实践基地资源库 / 案例候选池 / 案例终审
+inject: data
+---
+<style>
+.layout{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+.cover{position:relative;width:100%;height:240px;border-radius:10px;overflow:hidden}
+.cover img{width:100%;height:100%}
+.cover .btn{position:absolute;right:12px;bottom:12px;background:rgba(255,255,255,.92)}
+.sticky{position:sticky;top:76px;display:grid;gap:16px}
+.decide{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.decide label{display:flex;align-items:center;justify-content:center;gap:6px;height:42px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-weight:500;transition:.2s}
+.decide label.pass.on{border-color:var(--success);background:var(--success-l);color:var(--success)}
+.decide label.rej.on{border-color:var(--danger);background:var(--danger-l);color:var(--danger)}
+.decide input{display:none}
+.rec-box{background:#FAF5FF;border:1px solid #E9D5FF;border-radius:10px;padding:12px 14px;font-size:13px;color:#6B21A8}
+.files a,.files .file{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:13px;border-bottom:1px dashed var(--line)}
+.files a:last-child,.files .file:last-child{border:none}
+.files .file .muted{margin-left:auto}
+.achieve-edit{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.achieve-edit .pair{display:grid;grid-template-columns:96px 1fr;gap:8px}
+.pics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pics img{width:100%;height:110px;border-radius:8px}
+.input[readonly],.textarea[readonly],.input:disabled,.textarea:disabled,.select:disabled{background:#F8FAFC;color:var(--text-2)}
+</style>
+
+<div class="page-hd">
+  <div><h1 id="pageTitle">案例终审</h1><p id="pageSub"></p></div>
+  <div class="actions"><button class="btn" onclick="toast('即将跳转第二课堂 · 完整项目档案','external-link')"><i data-lucide="external-link"></i>第二课堂项目档案</button><a class="btn" id="previewLink" href="../student/case-detail.html?id=3"><i data-lucide="eye"></i>预览学生端</a></div>
+</div>
+
+<div class="layout">
+  <div class="card">
+    <div class="card-hd"><h3>案例正文</h3><span class="muted small" data-only="college">院级仅可查看，编辑与终审由校级完成</span></div>
+    <div class="card-bd form-grid" id="caseForm"></div>
+  </div>
+
+  <div class="sticky">
+    <div class="card">
+      <div class="card-hd"><h3>推荐信息</h3></div>
+      <div class="card-bd">
+        <div class="rec-box" id="recBox"><b>机械工程学院 · 周涛 推荐</b>（2026-10-25）<br>推荐理由：调研扎实，成果已转化为培养方案修订建议，具有示范意义。<br>亮点：成果转化、模式可复制</div>
+      </div>
+    </div>
+    <div class="card" data-only="school">
+      <div class="card-hd"><h3>终审操作</h3></div>
+      <div class="card-bd">
+        <div class="decide" id="decide">
+          <label class="pass on"><input type="radio" name="d" checked><i data-lucide="check"></i>通过入库</label>
+          <label class="rej"><input type="radio" name="d"><i data-lucide="x"></i>不通过</label>
+        </div>
+        <div class="field"><label>终审意见</label><textarea class="textarea">同意入库，摘要已精简。</textarea></div>
+        <div class="field mt-12"><label>展示设置</label><div class="flex between small"><span>同步推荐至「大国重器」主题 AI 推荐</span><span class="switch on" onclick="this.classList.toggle('on')"></span></div></div>
+        <button class="btn btn-primary btn-lg mt-16" style="width:100%" onclick="toast('案例已入库，操作已记录日志');setTimeout(()=>location.href='case-library.html',900)">提交终审</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><h3>遴选记录</h3><span class="muted small">日志完整留存</span></div>
+      <div class="card-bd timeline">
+        <div class="tl-item done"><div class="t">第二课堂结项并评为校级优秀</div><div class="d">2026-09-30</div></div>
+        <div class="tl-item done"><div class="t">系统自动抓取进入候选池</div><div class="d">2026-10-01 02:00</div></div>
+        <div class="tl-item done"><div class="t">机械工程学院 周涛 推荐入库</div><div class="d">2026-10-25 10:12</div></div>
+        <div class="tl-item"><div class="t">校级终审</div><div class="d">待处理</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var c = caseFromQuery(3);
+  var f = caseFields(c);
+  var canEdit = document.documentElement.dataset.role === 'school';
+  var dis = canEdit ? '' : ' disabled';
+  document.getElementById('pageTitle').textContent = '案例终审 · ' + f.title;
+  document.getElementById('pageSub').textContent = '来源：' + f.col + '推荐 · 第二课堂项目编号 ' + (c.projectNo || '') + ' · 结项时间 ' + (c.finished || '') + ' · 评优等级：' + f.level;
+  var preview = document.getElementById('previewLink');
+  if (preview) preview.setAttribute('href', '../student/case-detail.html?id=' + c.id);
+
+  function lab(name, req) {
+    return (req && canEdit ? '<span class="req">*</span>' : '') + name;
+  }
+  function field(name, labelHtml, control, span) {
+    return '<div class="field' + (span ? ' span-2' : '') + '" data-field="' + name + '"><label>' + labelHtml + '</label>' + control + '</div>';
+  }
+  function textInput(val) {
+    return '<input class="input" value="' + htmlEsc(val) + '"' + dis + '>';
+  }
+  function area(val) {
+    return '<textarea class="textarea"' + dis + '>' + htmlEsc(val) + '</textarea>';
+  }
+  var levels = ['国家级立项', '校级优秀', '院级优秀'];
+  var levelHtml = '<select class="select"' + dis + '>' + levels.map(function (lv) {
+    return '<option' + (lv === f.level ? ' selected' : '') + '>' + htmlEsc(lv) + '</option>';
+  }).join('') + '</select>';
+  var tagHtml = canEdit
+    ? '<div class="chips" data-chips="multi">' + f.tags.map(function (t) { return '<span class="chip on">' + htmlEsc(t.name) + '</span>'; }).join('') + '</div>'
+    : '<span class="flex gap-8">' + f.tags.map(function (t) { return '<span class="tag tag-c" style="--c:' + t.color + '">' + htmlEsc(t.name) + '</span>'; }).join('') + '</span>';
+  var cover = '<div class="cover"><img id="coverImg" data-shot="案例封面" src="' + img(f.img, 1200, 480) + '" alt="案例封面">'
+    + '<button type="button" class="btn btn-sm" data-only="school" id="coverPick"><i data-lucide="image"></i>更换封面</button>'
+    + '<input type="file" id="coverFile" accept="image/*" hidden></div>';
+  var ach = '<div class="achieve-edit">' + f.achievements.map(function (a) {
+    return '<div class="pair"><input class="input num" value="' + htmlEsc(a.n) + '"' + dis + '><input class="input" value="' + htmlEsc(a.label) + '"' + dis + '></div>';
+  }).join('') + '</div>';
+  var pics = '<div class="pics" data-shots="实践掠影">' + f.photos.map(function (key) {
+    return '<img data-shot="实践掠影" src="' + img(key, 500, 300) + '" alt="实践掠影">';
+  }).join('') + '</div>';
+  var files = '<div class="files">' + f.files.map(function (file) {
+    return '<div class="file"><i data-lucide="' + file.icon + '" style="color:' + (file.color || '#64748B') + '"></i><span>' + htmlEsc(file.name) + '</span><span class="muted small">' + htmlEsc(file.meta) + '</span></div>';
+  }).join('') + '</div>';
+
+  document.getElementById('caseForm').innerHTML = [
+    field('案例标题', lab('案例标题', true), textInput(f.title), true),
+    field('专题标签', lab('专题标签', true), tagHtml, true),
+    field('评优等级', lab('评优等级', true), levelHtml, false),
+    field('学年', lab('学年', true), textInput(f.year), false),
+    field('所属学院', lab('所属学院', true), '<input class="input" value="' + htmlEsc(f.col) + '" disabled>', false),
+    field('实践地点', lab('实践地点', true), textInput(f.place), false),
+    field('实践时间', lab('实践时间', true), textInput(f.period), false),
+    field('实践团队', lab('实践团队', true), textInput(f.team), false),
+    field('指导教师', lab('指导教师', true), textInput(f.advisor), false),
+    field('浏览次数', lab('浏览次数', false), '<input class="input" value="' + htmlEsc(f.views) + '" readonly' + dis + '>', false),
+    field('封面图片', lab('封面图片', true), cover, true),
+    field('成果摘要', lab('成果摘要', true), area(f.summary), true),
+    field('实践背景', lab('实践背景', true), area(f.background), true),
+    field('实践成果', lab('实践成果', true), ach, true),
+    field('实践掠影', lab('实践掠影', true), pics, true),
+    field('经验与启示', lab('经验与启示', true), area(f.insight), true),
+    field('成果附件', lab('成果附件', false), files, true)
+  ].join('');
+
+  if (c.id !== 3) {
+    var rec = document.getElementById('recBox');
+    if (rec) rec.innerHTML = '<b>' + htmlEsc(f.col) + ' 推荐</b>（' + htmlEsc(c.finished || '') + '）<br>推荐理由：' + htmlEsc(f.summary);
+    var marks = document.querySelectorAll('.timeline .t');
+    if (marks[0]) marks[0].textContent = '第二课堂结项并评为' + f.level;
+    if (marks[2]) marks[2].textContent = f.col + ' 推荐入库';
+  }
+  if (window.refreshIcons) refreshIcons();
+})();
+</script>
+<script>
+document.getElementById('decide').addEventListener('click', e => {
+  const l = e.target.closest('label'); if (!l) return;
+  document.querySelectorAll('#decide label').forEach(x => x.classList.remove('on')); l.classList.add('on');
+});
+</script>
+<script>
+(function () {
+  var btn = document.getElementById('coverPick');
+  var input = document.getElementById('coverFile');
+  var img = document.getElementById('coverImg');
+  if (!btn || !input || !img) return;
+  btn.addEventListener('click', function () { input.click(); });
+  input.addEventListener('change', function () {
+    var file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    var ok = file.type && file.type.indexOf('image/') === 0;
+    if (!ok && (!file.type || file.type === 'application/octet-stream')) ok = /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic|heif)$/i.test(file.name);
+    if (!ok) { toast('请上传图片文件', 'alert-circle'); return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      img.src = reader.result;
+      img.alt = file.name || '案例封面';
+      toast('已更换封面');
+    };
+    reader.onerror = function () { toast('读取图片失败', 'alert-circle'); };
+    reader.readAsDataURL(file);
+  });
+})();
+</script>
+
+<!-- 内容图灯箱 -->
+<script>
+// 内容图灯箱：点哪张看哪张；同一组可左右切换。关闭大图不离开当前页，也不关掉底下的弹窗。
+(function () {
+  if (document.getElementById('shotViewer')) return;
+  var css = document.createElement('style');
+  css.textContent = ''
+    + 'img[data-shot],[data-shots] img{cursor:zoom-in}'
+    + '.shot-viewer{position:fixed;inset:0;z-index:240;background:rgba(15,23,42,.86);display:none;align-items:center;justify-content:center}'
+    + '.shot-viewer.show{display:flex}'
+    + '.shot-viewer img{flex:0 0 auto;max-width:min(1080px,82vw);max-height:82vh;width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,.45);background:#111827;cursor:default}'
+    + '.shot-viewer .x,.shot-viewer .nav{position:absolute;z-index:2;display:grid;place-items:center;cursor:pointer;color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.28);user-select:none}'
+    + '.shot-viewer .x{right:22px;top:18px;width:36px;height:36px;border-radius:50%}'
+    + '.shot-viewer .nav{top:50%;width:42px;height:64px;margin-top:-32px;border-radius:8px}'
+    + '.shot-viewer .prev{left:18px}.shot-viewer .next{right:18px}'
+    + '.shot-viewer .cap{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#E5E7EB;font-size:13px;letter-spacing:1px;pointer-events:none}';
+  document.head.appendChild(css);
+
+  var box = document.createElement('div');
+  box.className = 'shot-viewer';
+  box.id = 'shotViewer';
+  box.innerHTML = '<span class="x" title="关闭"><i data-lucide="x"></i></span>'
+    + '<span class="nav prev" title="上一张"><i data-lucide="chevron-left"></i></span>'
+    + '<img alt="大图">'
+    + '<span class="nav next" title="下一张"><i data-lucide="chevron-right"></i></span>'
+    + '<span class="cap">图片</span>';
+  document.body.appendChild(box);
+
+  var urls = [], index = 0, label = '图片';
+  var big = box.querySelector('img');
+  var cap = box.querySelector('.cap');
+  var prev = box.querySelector('.prev');
+  var next = box.querySelector('.next');
+
+  function enlarge(src) {
+    var w = /[?&]w=(\d+)/.exec(src);
+    var h = /[?&]h=(\d+)/.exec(src);
+    if (!w) return src;
+    var nw = 1600;
+    var nh = h ? Math.max(1, Math.round(Number(h[1]) * nw / Number(w[1]))) : 0;
+    var out = src.replace(/([?&])w=\d+/, '$1w=' + nw);
+    if (nh) out = out.replace(/([?&])h=\d+/, '$1h=' + nh);
+    return out;
+  }
+  var token = 0;
+  function fit() {
+    if (!big.naturalWidth || !big.naturalHeight) return;
+    var maxW = Math.min(1080, window.innerWidth * 0.82);
+    var maxH = window.innerHeight * 0.82;
+    var scale = Math.min(maxW / big.naturalWidth, maxH / big.naturalHeight);
+    big.style.width = Math.max(1, Math.round(big.naturalWidth * scale)) + 'px';
+    big.style.height = Math.max(1, Math.round(big.naturalHeight * scale)) + 'px';
+  }
+  function paint() {
+    var my = ++token;
+    var thumb = urls[index];
+    var full = enlarge(thumb);
+    function apply(src) {
+      if (my !== token) return;
+      if (big.src === src && big.complete && big.naturalWidth) { fit(); return; }
+      big.onload = function () { if (my === token) fit(); };
+      big.src = src;
+      if (my === token && big.complete && big.naturalWidth) fit();
+    }
+    // 先用页面上已经加载的缩略图撑开大图，再换成更高清的地址
+    apply(thumb);
+    if (full !== thumb) {
+      var pre = new Image();
+      pre.onload = function () { apply(full); };
+      pre.src = full;
+    }
+    cap.textContent = label + ' ' + (index + 1) + ' / ' + urls.length;
+    var single = urls.length < 2;
+    prev.style.display = single ? 'none' : '';
+    next.style.display = single ? 'none' : '';
+  }
+
+  function open(list, i, lab) {
+    urls = list;
+    index = i;
+    label = lab || '图片';
+    paint();
+    box.classList.add('show');
+    if (window.refreshIcons) refreshIcons();
+  }
+  function step(d) {
+    if (urls.length < 2) return;
+    index = (index + d + urls.length) % urls.length;
+    paint();
+  }
+  function close() { box.classList.remove('show'); }
+
+  box.addEventListener('click', function (e) { if (e.target === box) close(); });
+  box.querySelector('.x').addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    close();
+  });
+  prev.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(-1);
+  });
+  next.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(1);
+  });
+
+  function shotFromEvent(e) {
+    var t = e.target;
+    if (!t) return null;
+    if (t.nodeType !== 1) t = t.parentElement;
+    if (!t || !t.closest) return null;
+    var im = t.closest('img');
+    if (!im || im.closest('.shot-viewer')) return null;
+    if (!im.hasAttribute('data-shot') && !im.closest('[data-shots]')) return null;
+    return im;
+  }
+  function onPick(e) {
+    var im = shotFromEvent(e);
+    if (!im) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var group = im.closest('[data-shots]');
+    if (group) {
+      var imgs = Array.prototype.slice.call(group.querySelectorAll('img'));
+      open(imgs.map(function (el) { return el.currentSrc || el.src; }), Math.max(0, imgs.indexOf(im)), group.getAttribute('data-shots') || '图片');
+    } else {
+      open([im.currentSrc || im.src], 0, im.getAttribute('data-shot') || '图片');
+    }
+  }
+  document.addEventListener('click', onPick, true);
+  document.addEventListener('auxclick', onPick, true);
+  document.addEventListener('keydown', function (e) {
+    if (!box.classList.contains('show')) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+  }, true);
+})();
+</script>

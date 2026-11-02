@@ -1,0 +1,245 @@
+---
+title: 实践基地管理
+layout: admin
+menu: bases
+crumb: 社会实践基地资源库 / 基地管理 / 实践基地管理
+inject: data
+---
+<style>
+.own{font-size:11px;padding:0 6px;border-radius:4px;background:#F3E8FF;color:#7C3AED;margin-left:6px}
+.ro{color:var(--text-3);font-size:13px;display:inline-flex;align-items:center;gap:4px}
+.table-wrap{overflow:auto}
+.table{min-width:1180px}
+.table .name{font-weight:500}
+.ck{width:16px;height:16px}
+</style>
+
+<div class="page-hd">
+  <div><h1>实践基地管理</h1><p>维护基地编号、牵头单位、共建单位、基地类型与实践主题；编辑操作日志留痕</p></div>
+  <div class="actions">
+    <button class="btn" type="button" onclick="toast('请按模板导入实践基地，导入后为草稿')"><i data-lucide="upload"></i>实践基地导入</button>
+    <button class="btn" type="button" onclick="batchPublish()"><i data-lucide="send"></i>批量发布</button>
+    <button class="btn" type="button" onclick="toast('正在导出基地清单')"><i data-lucide="download"></i>导出</button>
+    <a class="btn btn-primary" data-only="school" href="base-edit.html"><i data-lucide="plus"></i>新增</a>
+    <a class="btn btn-primary" data-only="college" href="base-edit.html"><i data-lucide="upload"></i>上报本院新基地</a>
+  </div>
+</div>
+
+<div class="alert alert-info mb-16" data-only="college"><i data-lucide="info"></i>院级管理员可查看全部基地；<b>仅可编辑、发布、删除本院牵头的基地</b>，其余只读。新增基地需「上报」并经校级审核后上线。</div>
+
+<div class="card">
+  <div class="card-hd">
+    <div class="filter-bar">
+      <div class="input-ic" style="width:220px"><i data-lucide="search"></i><input class="input" id="kwName" placeholder="基地名称"></div>
+      <div class="input-ic" style="width:200px"><i data-lucide="hash"></i><input class="input" id="kwCode" placeholder="基地编号"></div>
+      <select class="select" id="stSel"><option value="">基地状态</option><option>正常</option><option>停用</option></select>
+      <label class="flex gap-8 small" data-only="college"><input type="checkbox" id="mine">只看本院基地</label>
+    </div>
+    <span class="muted small">共 <b id="total"></b> 个基地</span>
+  </div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr>
+        <th style="width:42px"><input class="ck" type="checkbox" id="ckAll" title="全选本页可操作项"></th>
+        <th style="width:64px">序号</th>
+        <th>基地编号</th>
+        <th>基地名称</th>
+        <th>牵头单位</th>
+        <th>共建单位</th>
+        <th>基地类型</th>
+        <th>实践主题</th>
+        <th>单位类型</th>
+        <th style="width:168px">操作</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div class="pager" style="padding:0 20px 18px"><span class="total">每页 15 条</span><a><i data-lucide="chevron-left"></i></a><a class="on">1</a><a>2</a><a>3</a><span>…</span><a>20</a><a><i data-lucide="chevron-right"></i></a></div>
+</div>
+
+<script>
+const isSchool = document.documentElement.dataset.role === 'school';
+const MY_COL = '计算机学院';
+function codeOf(b){ return 'SJJD-' + String(200 + b.id).padStart(3, '0'); }
+function leadOf(b){ return b.col || '校团委'; }
+function runStatus(b){ return b.id % 11 === 0 ? '停用' : '正常'; }
+function typeOf(b){ return BASE_TYPES[(b.id - 1) % BASE_TYPES.length]; }
+function unitType(b){ return UNIT_TYPES[(b.id - 1) % UNIT_TYPES.length]; }
+function themeOf(b){ return CATS[b.c] ? CATS[b.c].name : '—'; }
+function canMaintain(b){ return isSchool || b.col === MY_COL; }
+function ops(b){
+  if (!canMaintain(b)) return '<span class="ro"><i data-lucide="lock"></i>只读</span>';
+  var pub = isSchool
+    ? 'onclick="toast(\'已发布上线，操作已记录日志\')"'
+    : 'onclick="toast(\'已提交上报，等待校级审核\')"';
+  return '<a class="btn-text" href="base-edit.html">编辑</a><a class="btn-text" ' + pub + '>发布</a><a class="btn-text danger" onclick="toast(\'已删除，操作已记录日志\')">删除</a>';
+}
+function render(){
+  const qName = document.getElementById('kwName').value.trim();
+  const qCode = document.getElementById('kwCode').value.trim();
+  const st = document.getElementById('stSel').value;
+  const mineEl = document.getElementById('mine');
+  const mine = !isSchool && mineEl && mineEl.checked;
+  const list = BASES.filter(b => (!qName || b.name.indexOf(qName) >= 0) && (!qCode || codeOf(b).indexOf(qCode) >= 0) && (!st || runStatus(b) === st) && (!mine || b.col === MY_COL));
+  document.getElementById('total').textContent = list.length;
+  document.getElementById('ckAll').checked = false;
+  document.getElementById('rows').innerHTML = list.slice(0, 15).map((b, i) => {
+    const own = b.col === MY_COL;
+    const dis = canMaintain(b) ? '' : ' disabled';
+    return '<tr><td><input class="ck" type="checkbox"' + dis + '></td><td class="num">' + (i + 1) + '</td><td class="num">' + codeOf(b) + '</td><td><span class="name">' + b.name + (own && !isSchool ? '<span class="own">本院</span>' : '') + '</span></td><td>' + leadOf(b) + '</td><td>' + b.unit + '</td><td>' + typeOf(b) + '</td><td>' + themeOf(b) + '</td><td>' + unitType(b) + '</td><td><div class="ops">' + ops(b) + '</div></td></tr>';
+  }).join('');
+  refreshIcons();
+}
+function batchPublish(){
+  var n = document.querySelectorAll('#rows input.ck:checked').length;
+  if (!n) { toast('请先勾选要发布的基地', 'alert-circle'); return; }
+  toast(isSchool ? ('已批量发布 ' + n + ' 个基地') : ('已将本院 ' + n + ' 个基地提交上报'));
+}
+['kwName', 'kwCode', 'stSel', 'mine'].forEach(id => { const el = document.getElementById(id); el && el.addEventListener(id === 'kwName' || id === 'kwCode' ? 'input' : 'change', render); });
+document.getElementById('ckAll').addEventListener('change', function () {
+  document.querySelectorAll('#rows input.ck:not(:disabled)').forEach(el => { el.checked = document.getElementById('ckAll').checked; });
+});
+render();
+</script>
+
+<!-- 内容图灯箱 -->
+<script>
+// 内容图灯箱：点哪张看哪张；同一组可左右切换。关闭大图不离开当前页，也不关掉底下的弹窗。
+(function () {
+  if (document.getElementById('shotViewer')) return;
+  var css = document.createElement('style');
+  css.textContent = ''
+    + 'img[data-shot],[data-shots] img{cursor:zoom-in}'
+    + '.shot-viewer{position:fixed;inset:0;z-index:240;background:rgba(15,23,42,.86);display:none;align-items:center;justify-content:center}'
+    + '.shot-viewer.show{display:flex}'
+    + '.shot-viewer img{flex:0 0 auto;max-width:min(1080px,82vw);max-height:82vh;width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,.45);background:#111827;cursor:default}'
+    + '.shot-viewer .x,.shot-viewer .nav{position:absolute;z-index:2;display:grid;place-items:center;cursor:pointer;color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.28);user-select:none}'
+    + '.shot-viewer .x{right:22px;top:18px;width:36px;height:36px;border-radius:50%}'
+    + '.shot-viewer .nav{top:50%;width:42px;height:64px;margin-top:-32px;border-radius:8px}'
+    + '.shot-viewer .prev{left:18px}.shot-viewer .next{right:18px}'
+    + '.shot-viewer .cap{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#E5E7EB;font-size:13px;letter-spacing:1px;pointer-events:none}';
+  document.head.appendChild(css);
+
+  var box = document.createElement('div');
+  box.className = 'shot-viewer';
+  box.id = 'shotViewer';
+  box.innerHTML = '<span class="x" title="关闭"><i data-lucide="x"></i></span>'
+    + '<span class="nav prev" title="上一张"><i data-lucide="chevron-left"></i></span>'
+    + '<img alt="大图">'
+    + '<span class="nav next" title="下一张"><i data-lucide="chevron-right"></i></span>'
+    + '<span class="cap">图片</span>';
+  document.body.appendChild(box);
+
+  var urls = [], index = 0, label = '图片';
+  var big = box.querySelector('img');
+  var cap = box.querySelector('.cap');
+  var prev = box.querySelector('.prev');
+  var next = box.querySelector('.next');
+
+  function enlarge(src) {
+    var w = /[?&]w=(\d+)/.exec(src);
+    var h = /[?&]h=(\d+)/.exec(src);
+    if (!w) return src;
+    var nw = 1600;
+    var nh = h ? Math.max(1, Math.round(Number(h[1]) * nw / Number(w[1]))) : 0;
+    var out = src.replace(/([?&])w=\d+/, '$1w=' + nw);
+    if (nh) out = out.replace(/([?&])h=\d+/, '$1h=' + nh);
+    return out;
+  }
+  var token = 0;
+  function fit() {
+    if (!big.naturalWidth || !big.naturalHeight) return;
+    var maxW = Math.min(1080, window.innerWidth * 0.82);
+    var maxH = window.innerHeight * 0.82;
+    var scale = Math.min(maxW / big.naturalWidth, maxH / big.naturalHeight);
+    big.style.width = Math.max(1, Math.round(big.naturalWidth * scale)) + 'px';
+    big.style.height = Math.max(1, Math.round(big.naturalHeight * scale)) + 'px';
+  }
+  function paint() {
+    var my = ++token;
+    var thumb = urls[index];
+    var full = enlarge(thumb);
+    function apply(src) {
+      if (my !== token) return;
+      if (big.src === src && big.complete && big.naturalWidth) { fit(); return; }
+      big.onload = function () { if (my === token) fit(); };
+      big.src = src;
+      if (my === token && big.complete && big.naturalWidth) fit();
+    }
+    apply(thumb);
+    if (full !== thumb) {
+      var pre = new Image();
+      pre.onload = function () { apply(full); };
+      pre.src = full;
+    }
+    cap.textContent = label + ' ' + (index + 1) + ' / ' + urls.length;
+    var single = urls.length < 2;
+    prev.style.display = single ? 'none' : '';
+    next.style.display = single ? 'none' : '';
+  }
+
+  function open(list, i, lab) {
+    urls = list;
+    index = i;
+    label = lab || '图片';
+    paint();
+    box.classList.add('show');
+    if (window.refreshIcons) refreshIcons();
+  }
+  function step(d) {
+    if (urls.length < 2) return;
+    index = (index + d + urls.length) % urls.length;
+    paint();
+  }
+  function close() { box.classList.remove('show'); }
+
+  box.addEventListener('click', function (e) { if (e.target === box) close(); });
+  box.querySelector('.x').addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    close();
+  });
+  prev.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(-1);
+  });
+  next.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(1);
+  });
+
+  function shotFromEvent(e) {
+    var t = e.target;
+    if (!t) return null;
+    if (t.nodeType !== 1) t = t.parentElement;
+    if (!t || !t.closest) return null;
+    var im = t.closest('img');
+    if (!im || im.closest('.shot-viewer')) return null;
+    if (!im.hasAttribute('data-shot') && !im.closest('[data-shots]')) return null;
+    return im;
+  }
+  function onPick(e) {
+    var im = shotFromEvent(e);
+    if (!im) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var group = im.closest('[data-shots]');
+    if (group) {
+      var imgs = Array.prototype.slice.call(group.querySelectorAll('img'));
+      open(imgs.map(function (el) { return el.currentSrc || el.src; }), Math.max(0, imgs.indexOf(im)), group.getAttribute('data-shots') || '图片');
+    } else {
+      open([im.currentSrc || im.src], 0, im.getAttribute('data-shot') || '图片');
+    }
+  }
+  document.addEventListener('click', onPick, true);
+  document.addEventListener('auxclick', onPick, true);
+  document.addEventListener('keydown', function (e) {
+    if (!box.classList.contains('show')) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+  }, true);
+})();
+</script>

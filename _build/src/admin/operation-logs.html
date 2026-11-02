@@ -1,0 +1,75 @@
+---
+title: 操作日志
+layout: admin
+menu: operation-logs
+crumb: 社会实践基地资源库 / 系统 / 操作日志
+---
+<style>
+.diff{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.diff div{border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.9}
+.diff .before{background:#FEF2F2;border:1px solid #FECACA}
+.diff .after{background:#F0FDF4;border:1px solid #BBF7D0}
+.diff h5{font-size:12px;color:var(--text-3);margin-bottom:6px;font-weight:500}
+.diff del{color:#B91C1C}
+.diff ins{color:#15803D;text-decoration:none;font-weight:600}
+</style>
+
+<div class="page-hd">
+  <div><h1>操作日志</h1><p>完整记录基地编辑、上报审核、案例遴选、AI 参数修改等操作的操作人、时间与修改前后内容</p></div>
+  <div class="actions"><button class="btn" onclick="toast('正在导出操作日志')"><i data-lucide="download"></i>导出日志</button></div>
+</div>
+<div class="alert alert-info mb-16"><i data-lucide="lock"></i>日志由系统自动生成，<b>任何角色均不可删除或修改</b>。<span data-only="college">院级管理员仅可查看本院相关操作。</span></div>
+
+<div class="card">
+  <div class="card-hd">
+    <div class="filter-bar">
+      <select class="select" id="tySel"><option value="">全部操作类型</option><option>基地编辑</option><option>上报审核</option><option>案例遴选</option><option>AI 参数</option><option>标签管理</option></select>
+      <input class="input" style="width:150px" placeholder="操作人">
+      <input class="input" style="width:230px" value="2026-10-01 至 2026-10-26">
+      <button class="btn btn-primary"><i data-lucide="search"></i>查询</button>
+    </div>
+    <span class="muted small" id="total"></span>
+  </div>
+  <table class="table">
+    <thead><tr><th>操作时间</th><th>操作人</th><th>操作类型</th><th>操作对象</th><th>操作内容</th><th>IP</th><th>修改详情</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div class="pager" style="padding:0 20px 18px"><span class="total">日志保留期限：永久</span><a><i data-lucide="chevron-left"></i></a><a class="on">1</a><a>2</a><a>3</a><a><i data-lucide="chevron-right"></i></a></div>
+</div>
+
+<div class="modal-mask" id="diffM">
+  <div class="modal" style="width:680px">
+    <div class="modal-hd">修改前后对比<span class="x" onclick="closeModal('diffM')"><i data-lucide="x"></i></span></div>
+    <div class="modal-bd">
+      <div class="desc mb-16"><div><span class="k">操作人</span><span>周涛（机械工程学院）</span></div><div><span class="k">操作时间</span><span>2026-10-25 09:18:42</span></div><div class="full"><span class="k">操作对象</span><span>基地「三一重工“灯塔工厂”」</span></div></div>
+      <div class="diff">
+        <div class="before"><h5>修改前</h5>单批次接待人数：<del>30</del><br>每周可接待批次：<del>1</del><br>可承接实践方向：智能制造参观研学</div>
+        <div class="after"><h5>修改后</h5>单批次接待人数：<ins>40</ins><br>每周可接待批次：<ins>2</ins><br>可承接实践方向：智能制造参观研学<ins>、企业见习、工程师访谈</ins></div>
+      </div>
+    </div>
+    <div class="modal-ft"><button class="btn" onclick="closeModal('diffM')">关闭</button></div>
+  </div>
+</div>
+
+<script>
+const isSchool = document.documentElement.dataset.role === 'school';
+// [时间, 操作人, 类型, 对象, 内容, 是否本院(计算机学院)相关]
+const LOGS = [
+  ['2026-10-26 20:15', '王建国（校级）', '案例遴选', '十八洞村产业振兴回访', '终审入库', 0],
+  ['2026-10-26 16:20', '李敏（计算机学院）', '上报审核', '长沙人工智能创新中心', '提交基地上报', 1],
+  ['2026-10-26 11:02', '王建国（校级）', 'AI 参数', '因子权重 v1.6', '地理位置 20% → 25%，主题标签 40% → 35%', 0],
+  ['2026-10-25 17:40', '王建国（校级）', '案例遴选', '旧城改造口述史', '下架案例', 0],
+  ['2026-10-25 10:12', '周涛（机械工程学院）', '案例遴选', '走进“灯塔工厂”', '推荐进入优秀案例库', 0],
+  ['2026-10-25 09:18', '周涛（机械工程学院）', '基地编辑', '三一重工“灯塔工厂”', '修改接待容量与实践方向', 0],
+  ['2026-10-24 15:30', '李敏（计算机学院）', '上报审核', '国家超级计算长沙中心', '提交接待容量调整，等待校级审核', 1],
+  ['2026-10-24 09:30', '李敏（计算机学院）', '基地编辑', '国家超级计算长沙中心', '接待容量 30 → 40（待校级审核）', 1],
+  ['2026-10-23 14:05', '王建国（校级）', '标签管理', '基层治理', '停用标签', 0],
+  ['2026-10-20 11:20', '王建国（校级）', '上报审核', '某科技公司研发中心', '驳回上报：缺少共建协议', 1]
+];
+const TY = { '基地编辑': 'tag-blue', '上报审核': 'tag-c', '案例遴选': 'tag-red', 'AI 参数': 'tag-green', '标签管理': 'tag-gray' };
+const list = LOGS.filter(l => isSchool || l[5]);
+document.getElementById('total').textContent = `共 ${isSchool ? '1,286' : list.length} 条记录`;
+document.getElementById('rows').innerHTML = list.map(l => `<tr>
+  <td class="num small">${l[0]}</td><td>${l[1]}</td><td><span class="tag ${TY[l[2]]}" style="--c:#7C3AED">${l[2]}</span></td><td>${l[3]}</td><td class="muted">${l[4]}</td>
+  <td class="num small muted">10.12.${30 + l[0].length % 9}.${(+l[0].slice(-2) * 3) % 250}</td><td><a class="btn-text" onclick="openModal('diffM')">查看对比</a></td></tr>`).join('');
+</script>

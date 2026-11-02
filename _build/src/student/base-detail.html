@@ -1,0 +1,323 @@
+---
+title: 基地详情
+layout: student
+menu: base-list
+crumb: 首页 / 基地检索 / 基地详情
+inject: data
+---
+<style>
+.banner{position:relative;height:280px;border-radius:14px;overflow:hidden;color:#fff;margin-bottom:20px}
+.banner img{width:100%;height:100%;object-fit:cover}
+.banner::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,30,79,.88) 0%,rgba(11,30,79,.45) 55%,rgba(11,30,79,.1))}
+.banner .in{position:absolute;inset:0;z-index:1;padding:36px 40px;display:flex;flex-direction:column;justify-content:flex-end}
+.banner h1{font-size:32px;letter-spacing:1px;margin:10px 0 6px;max-width:calc(100% - 300px)}
+.banner p{opacity:.85;max-width:640px}
+.banner .tags{display:flex;gap:8px;flex-wrap:wrap;max-width:calc(100% - 300px)}
+.banner .tags span{font-size:12px;padding:2px 10px;border-radius:4px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25)}
+.banner .acts{position:absolute;right:40px;bottom:36px;z-index:2;display:flex;gap:10px}
+.banner .acts .btn{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35);color:#fff}
+.banner .acts .btn:hover{background:rgba(255,255,255,.24)}
+.banner .acts .btn-red{background:var(--red);border-color:var(--red)}
+.layout{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+.layout>div{display:grid;gap:20px}
+.desc .k{width:120px;line-height:1.7}
+.desc>div{align-items:flex-start}
+.desc>div>span:last-child{min-width:0;line-height:1.7}
+.gallery{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:10px}
+.gallery img{width:100%;height:148px;object-fit:cover;border-radius:8px}
+.photo-label{margin:18px 0 10px;color:var(--text-3);font-size:14px}
+.intro{color:var(--text-2);line-height:1.9}
+.case-links{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.case-links a{color:var(--primary);line-height:1.6}
+.case-links a:hover{text-decoration:underline}
+.attach .btn{white-space:nowrap}
+</style>
+
+<div class="banner">
+  <img id="bannerImg" src="{{img:mountain2:1600x560}}" alt="基地照片">
+  <div class="in">
+    <div class="tags" id="bannerTags"></div>
+    <h1 id="bannerTitle">基地详情</h1>
+    <p id="bannerSub"></p>
+  </div>
+  <div class="acts">
+    <button class="btn" onclick="this.classList.toggle('on');toast('已加入我的收藏')"><i data-lucide="star"></i>收藏</button>
+    <a class="btn" id="mapLink" href="map.html"><i data-lucide="map"></i>地图定位</a>
+    <a class="btn btn-red" href="project-draft.html"><i data-lucide="file-plus-2"></i>发起项目申报</a>
+  </div>
+</div>
+
+<div class="layout">
+  <div id="detailMain"></div>
+  <div>
+    <div class="card">
+      <div class="card-hd"><h3>发起实践</h3></div>
+      <div class="card-bd">
+        <p class="muted small" style="margin-bottom:14px">确定实践基地后，可直接发起第二课堂项目申报，立项与结项在第二课堂办理。</p>
+        <a class="btn btn-red btn-lg" style="width:100%" href="project-draft.html"><i data-lucide="file-plus-2"></i>以此基地发起第二课堂项目申报</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var id = parseInt(params.get('id'), 10);
+  var b = BASES.find(function (x) { return x.id === id; }) || BASES[0];
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
+  }
+  function themeColor(name) {
+    var i;
+    for (i = 0; i < CATS.length; i++) {
+      if (CATS[i].name === name) return CATS[i].color;
+    }
+    if (name.indexOf('大中小学') === 0) return '#8B5CF6';
+    if (name.indexOf('弘扬科学家') === 0) return '#6366F1';
+    return '#2563EB';
+  }
+  function row(k, v, full) {
+    return '<div' + (full ? ' class="full"' : '') + '><span class="k">' + k + '</span><span>' + v + '</span></div>';
+  }
+  function card(title, body) {
+    return '<div class="card"><div class="card-hd"><h3>' + title + '</h3></div>' + body + '</div>';
+  }
+
+  var themes = b.themes || [];
+  var themeHtml = themes.length
+    ? '<span class="flex gap-8 wrap-f">' + themes.map(function (n) {
+        return '<span class="tag tag-c" style="--c:' + themeColor(n) + '">' + esc(n) + '</span>';
+      }).join('') + '</span>'
+    : '<span class="muted">—</span>';
+  var cases = (b.caseIds || []).map(function (cid) {
+    return CASES.find(function (c) { return c.id === cid; });
+  }).filter(Boolean);
+  var caseHtml = cases.length
+    ? '<span class="case-links">' + cases.map(function (c) {
+        return '<a href="case-detail.html?id=' + c.id + '">' + esc(c.title) + '</a>';
+      }).join('') + '</span>'
+    : '<span class="muted">—</span>';
+  var hz = b.hzms && String(b.hzms).trim() ? esc(b.hzms) : '<span class="muted">—</span>';
+  var photos = b.photos && b.photos.length ? b.photos : [b.img];
+  var photoHtml = '<div class="gallery" data-shots="基地照片">' + photos.map(function (key) {
+    return '<img src="' + img(key, 800, 500) + '" alt="基地照片">';
+  }).join('') + '</div>';
+  var statusHtml = b.status === '停用'
+    ? '<span class="status s-cancel">停用</span>'
+    : '<span class="status s-pass">正常</span>';
+
+  document.getElementById('bannerImg').src = img(b.img, 1600, 560);
+  document.getElementById('bannerImg').alt = b.name;
+  document.getElementById('bannerTitle').textContent = b.name;
+  document.getElementById('bannerSub').textContent = b.lead + '牵头 · ' + b.unit + '共建 · 学生评价 ' + Number(b.score).toFixed(1) + ' 分';
+  document.getElementById('bannerTags').innerHTML =
+    themes.slice(0, 2).map(function (n) {
+      return '<span style="background:' + themeColor(n) + ';border-color:' + themeColor(n) + '">' + esc(n) + '</span>';
+    }).join('') +
+    '<span>' + esc(b.lv) + '基地</span><span>' + esc(b.region) + '</span>';
+  document.getElementById('mapLink').href = 'map.html?locate=' + b.id;
+  var crumbName = document.querySelector('.crumb b');
+  if (crumbName) crumbName.textContent = b.name;
+
+  var basic = '<div class="card-bd"><div class="desc">' +
+    row('基地编号', '<span class="num">' + esc(b.code) + '</span>') +
+    row('基地名称', esc(b.name)) +
+    row('牵头单位', esc(b.lead)) +
+    row('共建单位', esc(b.unit)) +
+    row('单位类型', esc(b.unitType)) +
+    row('基地类型', esc(b.baseType)) +
+    row('实践主题', themeHtml, true) +
+    row('合作模式', hz, true) +
+    row('基地状态', statusHtml) +
+    row('学生评价', '<span class="num">' + Number(b.score).toFixed(1) + '</span> 分') +
+    row('基地简介', '<span class="intro">' + esc(b.intro) + '</span>', true) +
+    row('可承接实践方向', esc(b.dirs), true) +
+    row('优秀案例', caseHtml, true) +
+    '</div><div class="photo-label">基地照片</div>' + photoHtml + '</div>';
+
+  var place = '<div class="card-bd"><div class="desc">' +
+    row('所在地区', esc(b.region)) +
+    row('提供岗位数量', '<span class="num">' + esc(b.cap) + '</span> 人<span class="muted">（单次可接待学生最大数量）</span>') +
+    row('详细地址', esc(b.addr), true) +
+    row('基地经度', '<span class="num">' + Number(b.lng).toFixed(2) + '</span>') +
+    row('基地纬度', '<span class="num">' + Number(b.lat).toFixed(2) + '</span>') +
+    '</div></div>';
+
+  var contact = '<div class="card-bd"><div class="desc">' +
+    row('基地联系人', esc(b.contact)) +
+    row('联系人电话', '<span class="num">' + esc(b.phone) + '</span>') +
+    row('开放时间', esc(b.openTime), true) +
+    '</div></div>';
+
+  var award = '<div class="card-bd"><div class="desc">' +
+    row('是否授牌', b.awarded ? '是' : '否') +
+    row('授牌情况', esc(b.award)) +
+    row('授牌数量', '<span class="num">' + esc(b.plaqueCount) + '</span>') +
+    row('合作截止日期', '<span class="num">' + esc(b.until) + '</span>') +
+    row('学校负责人', esc(b.schoolContact)) +
+    row('负责人电话', '<span class="num">' + esc(b.schoolPhone) + '</span>') +
+    '</div></div>';
+
+  var files = '<div class="card-bd attach"><div class="desc">' +
+    row('协议扫描件', '<button type="button" class="btn btn-sm" data-dl><i data-lucide="file-text"></i>' + esc(b.agreeFile) + '</button>') +
+    row('牌匾扫描件', '<button type="button" class="btn btn-sm" data-dl><i data-lucide="image"></i>' + esc(b.plaqueFile) + '</button>') +
+    '</div></div>';
+
+  var main = document.getElementById('detailMain');
+  main.innerHTML = card('基本信息', basic) + card('地点与接待', place) + card('联系与开放', contact) + card('授牌与合作', award) + card('附件', files);
+  main.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-dl]');
+    if (!btn) return;
+    e.preventDefault();
+    toast('原型不提供真实下载');
+  });
+  if (window.refreshIcons) refreshIcons();
+})();
+</script>
+
+<!-- 内容图灯箱 -->
+<script>
+// 内容图灯箱：点哪张看哪张；同一组可左右切换。关闭大图不离开当前页，也不关掉底下的弹窗。
+(function () {
+  if (document.getElementById('shotViewer')) return;
+  var css = document.createElement('style');
+  css.textContent = ''
+    + 'img[data-shot],[data-shots] img{cursor:zoom-in}'
+    + '.shot-viewer{position:fixed;inset:0;z-index:240;background:rgba(15,23,42,.86);display:none;align-items:center;justify-content:center}'
+    + '.shot-viewer.show{display:flex}'
+    + '.shot-viewer img{flex:0 0 auto;max-width:min(1080px,82vw);max-height:82vh;width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,.45);background:#111827;cursor:default}'
+    + '.shot-viewer .x,.shot-viewer .nav{position:absolute;z-index:2;display:grid;place-items:center;cursor:pointer;color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.28);user-select:none}'
+    + '.shot-viewer .x{right:22px;top:18px;width:36px;height:36px;border-radius:50%}'
+    + '.shot-viewer .nav{top:50%;width:42px;height:64px;margin-top:-32px;border-radius:8px}'
+    + '.shot-viewer .prev{left:18px}.shot-viewer .next{right:18px}'
+    + '.shot-viewer .cap{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#E5E7EB;font-size:13px;letter-spacing:1px;pointer-events:none}';
+  document.head.appendChild(css);
+
+  var box = document.createElement('div');
+  box.className = 'shot-viewer';
+  box.id = 'shotViewer';
+  box.innerHTML = '<span class="x" title="关闭"><i data-lucide="x"></i></span>'
+    + '<span class="nav prev" title="上一张"><i data-lucide="chevron-left"></i></span>'
+    + '<img alt="大图">'
+    + '<span class="nav next" title="下一张"><i data-lucide="chevron-right"></i></span>'
+    + '<span class="cap">图片</span>';
+  document.body.appendChild(box);
+
+  var urls = [], index = 0, label = '图片';
+  var big = box.querySelector('img');
+  var cap = box.querySelector('.cap');
+  var prev = box.querySelector('.prev');
+  var next = box.querySelector('.next');
+
+  function enlarge(src) {
+    var w = /[?&]w=(\d+)/.exec(src);
+    var h = /[?&]h=(\d+)/.exec(src);
+    if (!w) return src;
+    var nw = 1600;
+    var nh = h ? Math.max(1, Math.round(Number(h[1]) * nw / Number(w[1]))) : 0;
+    var out = src.replace(/([?&])w=\d+/, '$1w=' + nw);
+    if (nh) out = out.replace(/([?&])h=\d+/, '$1h=' + nh);
+    return out;
+  }
+  var token = 0;
+  function fit() {
+    if (!big.naturalWidth || !big.naturalHeight) return;
+    var maxW = Math.min(1080, window.innerWidth * 0.82);
+    var maxH = window.innerHeight * 0.82;
+    var scale = Math.min(maxW / big.naturalWidth, maxH / big.naturalHeight);
+    big.style.width = Math.max(1, Math.round(big.naturalWidth * scale)) + 'px';
+    big.style.height = Math.max(1, Math.round(big.naturalHeight * scale)) + 'px';
+  }
+  function paint() {
+    var my = ++token;
+    var thumb = urls[index];
+    var full = enlarge(thumb);
+    function apply(src) {
+      if (my !== token) return;
+      if (big.src === src && big.complete && big.naturalWidth) { fit(); return; }
+      big.onload = function () { if (my === token) fit(); };
+      big.src = src;
+      if (my === token && big.complete && big.naturalWidth) fit();
+    }
+    // 先用页面上已经加载的缩略图撑开大图，再换成更高清的地址
+    apply(thumb);
+    if (full !== thumb) {
+      var pre = new Image();
+      pre.onload = function () { apply(full); };
+      pre.src = full;
+    }
+    cap.textContent = label + ' ' + (index + 1) + ' / ' + urls.length;
+    var single = urls.length < 2;
+    prev.style.display = single ? 'none' : '';
+    next.style.display = single ? 'none' : '';
+  }
+
+  function open(list, i, lab) {
+    urls = list;
+    index = i;
+    label = lab || '图片';
+    paint();
+    box.classList.add('show');
+    if (window.refreshIcons) refreshIcons();
+  }
+  function step(d) {
+    if (urls.length < 2) return;
+    index = (index + d + urls.length) % urls.length;
+    paint();
+  }
+  function close() { box.classList.remove('show'); }
+
+  box.addEventListener('click', function (e) { if (e.target === box) close(); });
+  box.querySelector('.x').addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    close();
+  });
+  prev.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(-1);
+  });
+  next.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(1);
+  });
+
+  function shotFromEvent(e) {
+    var t = e.target;
+    if (!t) return null;
+    if (t.nodeType !== 1) t = t.parentElement;
+    if (!t || !t.closest) return null;
+    var im = t.closest('img');
+    if (!im || im.closest('.shot-viewer')) return null;
+    if (!im.hasAttribute('data-shot') && !im.closest('[data-shots]')) return null;
+    return im;
+  }
+  function onPick(e) {
+    var im = shotFromEvent(e);
+    if (!im) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var group = im.closest('[data-shots]');
+    if (group) {
+      var imgs = Array.prototype.slice.call(group.querySelectorAll('img'));
+      open(imgs.map(function (el) { return el.currentSrc || el.src; }), Math.max(0, imgs.indexOf(im)), group.getAttribute('data-shots') || '图片');
+    } else {
+      open([im.currentSrc || im.src], 0, im.getAttribute('data-shot') || '图片');
+    }
+  }
+  document.addEventListener('click', onPick, true);
+  document.addEventListener('auxclick', onPick, true);
+  document.addEventListener('keydown', function (e) {
+    if (!box.classList.contains('show')) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+  }, true);
+})();
+</script>

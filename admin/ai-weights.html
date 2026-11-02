@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 因子权重配置 - 社会实践基地资源库（管理后台）</title>
+<script>
+(function(){
+  var p = new URLSearchParams(location.search).get('role');
+  if (p) localStorage.setItem('sjjd-role', p);
+  document.documentElement.dataset.role = localStorage.getItem('sjjd-role') || 'school';
+  document.addEventListener('DOMContentLoaded', function(){
+    var role = document.documentElement.dataset.role;
+    document.querySelectorAll('a[href*="from=admin"]').forEach(function(a){
+      var href = a.getAttribute('href');
+      if (href.indexOf('role=') === -1) a.setAttribute('href', href + '&role=' + encodeURIComponent(role));
+    });
+  });
+})();
+function switchRole(r){ localStorage.setItem('sjjd-role', r); location.href = location.pathname; }
+</script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+/* ========== 设计令牌 ========== */
+:root{
+  --primary:#2563EB;--primary-d:#1D4ED8;--primary-l:#EFF4FF;--navy:#0F2A6B;
+  --red:#C8102E;--red-l:#FDEDEF;--success:#16A34A;--success-l:#EAF7EE;
+  --warning:#D97706;--warning-l:#FEF4E4;--danger:#DC2626;--danger-l:#FDECEC;
+  --text:#1F2937;--text-2:#4B5563;--text-3:#9CA3AF;--border:#E5E7EB;--line:#F0F1F4;
+  --bg:#F4F6FA;--radius:10px;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.05);
+  --shadow-lg:0 16px 40px rgba(16,24,40,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;font-size:14px;color:var(--text);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%;object-fit:cover}
+button,input,select,textarea{font:inherit;color:inherit}
+svg.lucide{width:16px;height:16px;stroke-width:2;flex-shrink:0}
+.num{font-family:"DIN Alternate","Bahnschrift","Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums}
+html[data-role=college] [data-only=school],html[data-role=school] [data-only=college]{display:none!important}
+
+/* ========== 学生端门户布局 ========== */
+.wrap{width:1240px;max-width:calc(100% - 48px);margin:0 auto}
+.portal-hd{background:linear-gradient(90deg,#0F2A6B,#1E4FD8);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(15,42,107,.25)}
+.portal-hd-in{height:64px;display:flex;align-items:center;gap:32px}
+.logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.logo-ic{width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.16);display:grid;place-items:center}
+.logo-ic svg.lucide{width:20px;height:20px}
+.logo b{display:block;font-size:15px;letter-spacing:.5px}
+.logo small{display:block;font-size:12px;opacity:.75;margin-top:-2px}
+.portal-nav{display:flex;gap:4px;flex:1}
+.portal-nav a{padding:6px 12px;border-radius:6px;opacity:.85;transition:.2s;font-size:14px;white-space:nowrap}
+.portal-nav a:hover{opacity:1;background:rgba(255,255,255,.1)}
+.portal-nav a.on{opacity:1;background:rgba(255,255,255,.18);font-weight:600}
+.portal-user,.admin-hd-r{display:flex;align-items:center;gap:14px}
+.hd-ic{position:relative;width:34px;height:34px;display:grid;place-items:center;border-radius:8px;transition:.2s}
+.hd-ic:hover{background:rgba(255,255,255,.12)}
+.hd-ic.on,.hd-ic.on:hover{background:rgba(255,255,255,.2)}
+.hd-ic svg.lucide{width:18px;height:18px}
+.hd-ic em{position:absolute;top:2px;right:0;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#F43F5E;font-size:11px;font-style:normal;line-height:16px;text-align:center}
+.hd-me{display:flex;align-items:center;gap:8px;padding:4px 8px 4px 4px;border-radius:20px;transition:.2s}
+.hd-me:hover,.hd-me.on{background:rgba(255,255,255,.12)}
+.hd-me img{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.5)}
+.hd-me span{font-size:13px;line-height:1.25}
+.hd-me small{display:block;font-size:11px;opacity:.7}
+.portal-main{padding:20px 0 48px;min-height:calc(100vh - 120px)}
+.portal-ft{text-align:center;color:var(--text-3);font-size:12px;padding:20px 0 28px}
+
+/* ========== 管理端布局 ========== */
+.admin-hd{position:fixed;top:0;left:0;right:0;height:56px;background:linear-gradient(90deg,#0B2259,#163E9E);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:60}
+.role-switch{display:flex;align-items:center;gap:6px;font-size:13px;background:rgba(255,255,255,.1);padding:4px 6px 4px 10px;border-radius:8px}
+.role-switch select{background:#fff;color:var(--text);border:none;border-radius:6px;height:26px;padding:0 6px;cursor:pointer;outline:none}
+.ro-badge{display:flex;align-items:center;gap:6px;font-size:12px;background:rgba(255,255,255,.14);padding:4px 10px;border-radius:12px}
+.side{position:fixed;top:56px;left:0;bottom:0;width:220px;background:#fff;border-right:1px solid var(--border);padding:12px 10px;overflow-y:auto;z-index:40}
+.side-group{font-size:12px;color:var(--text-3);padding:14px 12px 6px}
+.side a{display:flex;align-items:center;gap:10px;height:38px;padding:0 12px;border-radius:8px;color:var(--text-2);transition:.15s;margin-bottom:2px}
+.side a:hover{background:#F3F5F9;color:var(--text)}
+.side a.on{background:var(--primary-l);color:var(--primary);font-weight:600}
+.side a span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lock-tag{display:none;font-style:normal;font-size:11px;color:var(--text-3);background:#F3F4F6;border-radius:4px;padding:0 5px}
+html[data-role=college] .side a[data-lock]{color:var(--text-3)}
+html[data-role=college] .lock-tag{display:inline}
+.admin-main{margin-left:220px;padding:76px 24px 40px;min-height:100vh}
+
+/* ========== 通用：面包屑 / 页头 ========== */
+.crumb{display:flex;align-items:center;gap:6px;color:var(--text-3);font-size:13px;margin-bottom:14px}
+.crumb svg.lucide{width:13px;height:13px}
+.crumb b{color:var(--text-2);font-weight:500}
+.page-hd{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px}
+.page-hd h1{font-size:22px;font-weight:600;line-height:1.3}
+.page-hd p{color:var(--text-3);margin-top:4px;font-size:13px}
+.page-hd .actions{display:flex;gap:10px}
+
+/* ========== 按钮 ========== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 14px;border-radius:7px;border:1px solid var(--border);background:#fff;color:var(--text-2);cursor:pointer;transition:.2s;white-space:nowrap;font-size:14px}
+.btn:hover{border-color:var(--primary);color:var(--primary)}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-d);color:#fff}
+.btn-red{background:var(--red);border-color:var(--red);color:#fff}
+.btn-red:hover{background:#A50D25;border-color:#A50D25;color:#fff}
+.btn-danger{color:var(--danger);border-color:#F7C9C9}
+.btn-danger:hover{background:var(--danger-l);border-color:var(--danger);color:var(--danger)}
+.btn-success{background:var(--success);border-color:var(--success);color:#fff}
+.btn-success:hover{background:#12813B;color:#fff}
+.btn-text{border:none;background:none;height:auto;padding:0;color:var(--primary)}
+.btn-text:hover{color:var(--primary-d);text-decoration:underline}
+.btn-text.danger{color:var(--danger)}
+.btn-sm{height:28px;padding:0 10px;font-size:13px}
+.btn-lg{height:42px;padding:0 22px;font-size:15px}
+.btn[disabled],.btn.disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+
+/* ========== 卡片 ========== */
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid #ECEEF2}
+.card-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.card-hd h3{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card-hd h3::before{content:"";width:3px;height:14px;background:var(--primary);border-radius:2px}
+.card-hd .more{font-size:13px;color:var(--text-3);display:flex;align-items:center;gap:2px}
+.card-hd .more:hover{color:var(--primary)}
+.card-bd{padding:20px}
+
+/* ========== 标签 / 状态 ========== */
+.tag{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:5px;font-size:12px;background:#F3F4F6;color:var(--text-2);white-space:nowrap}
+.tag svg.lucide{width:12px;height:12px}
+.tag-c{color:var(--c);background:color-mix(in srgb,var(--c) 10%,#fff)}
+.tag-blue{background:var(--primary-l);color:var(--primary)}
+.tag-red{background:var(--red-l);color:var(--red)}
+.tag-green{background:var(--success-l);color:var(--success)}
+.tag-orange{background:var(--warning-l);color:var(--warning)}
+.tag-gray{background:#F3F4F6;color:var(--text-3)}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.s-pending{color:var(--warning)}.s-pass{color:var(--success)}.s-reject{color:var(--danger)}.s-cancel{color:var(--text-3)}.s-info{color:var(--primary)}
+
+/* ========== 表格 ========== */
+.table{width:100%;border-collapse:collapse}
+.table th{background:#F8FAFC;color:var(--text-2);font-weight:500;text-align:left;padding:11px 14px;font-size:13px;border-bottom:1px solid var(--border);white-space:nowrap}
+.table td{padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.table tr:hover td{background:#FAFBFE}
+.table .r{text-align:right}
+.table .ops{display:flex;gap:14px;white-space:nowrap}
+.cell-main{display:flex;align-items:center;gap:12px}
+.cell-main img{width:56px;height:40px;border-radius:6px}
+.cell-main b{font-weight:500;display:block}
+.cell-main small{color:var(--text-3);font-size:12px}
+
+/* ========== 表单 ========== */
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px 28px}
+.span-2{grid-column:span 2}
+.field label{display:block;font-size:13px;color:var(--text-2);margin-bottom:6px;font-weight:500}
+.req{color:var(--danger);margin-right:2px}
+.input,.select,.textarea{width:100%;height:36px;border:1px solid #D7DCE3;border-radius:7px;padding:0 12px;background:#fff;outline:none;transition:.2s}
+.textarea{height:auto;min-height:96px;padding:8px 12px;resize:vertical;line-height:1.7}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.hint{font-size:12px;color:var(--text-3);margin-top:4px}
+.input-ic{position:relative}
+.input-ic svg.lucide{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-3)}
+.input-ic .input{padding-left:34px}
+.switch{position:relative;width:38px;height:22px;border-radius:11px;background:#D1D5DB;cursor:pointer;transition:.2s;display:inline-block;flex-shrink:0;border:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.switch.on{background:var(--primary)}
+.switch.on::after{left:19px}
+.radio-group{display:flex;gap:20px;height:36px;align-items:center}
+.radio-group label{display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;font-weight:400;color:var(--text)}
+.upload{border:1px dashed #C9D1DC;border-radius:8px;padding:18px;text-align:center;color:var(--text-3);font-size:13px;cursor:pointer;transition:.2s;background:#FAFBFC}
+.upload:hover{border-color:var(--primary);color:var(--primary)}
+
+/* ========== 筛选 ========== */
+.filter-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.filter-bar .select,.filter-bar .input{width:160px}
+.filter-row{display:flex;gap:16px;align-items:flex-start;padding:10px 0}
+.filter-row+.filter-row{border-top:1px dashed var(--line)}
+.filter-row>.k{width:76px;flex-shrink:0;color:var(--text-3);font-size:13px;line-height:28px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 12px;border-radius:14px;border:1px solid var(--border);background:#fff;font-size:13px;cursor:pointer;transition:.2s;color:var(--text-2);white-space:nowrap}
+.chip:hover{border-color:var(--primary);color:var(--primary)}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.chip i.dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+
+/* ========== Tabs ========== */
+.tabs{display:flex;gap:28px;border-bottom:1px solid var(--border);margin-bottom:18px}
+.tabs a{padding:10px 0;color:var(--text-2);position:relative;font-size:15px;display:flex;align-items:center;gap:6px}
+.tabs a:hover{color:var(--primary)}
+.tabs a.on{color:var(--primary);font-weight:600}
+.tabs a.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--primary);border-radius:1px}
+.tabs .cnt{font-size:12px;background:#F1F3F6;color:var(--text-3);border-radius:9px;padding:0 7px;font-weight:400}
+.tabs a.on .cnt{background:var(--primary-l);color:var(--primary)}
+
+/* ========== 统计卡 ========== */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat{background:#fff;border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);border:1px solid #ECEEF2;display:flex;gap:14px;align-items:center}
+.stat .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:var(--primary-l);color:var(--primary);flex-shrink:0}
+.stat .ic svg.lucide{width:22px;height:22px}
+.stat .v{font-size:26px;font-weight:700;line-height:1.2}
+.stat .v small{font-size:13px;font-weight:400;color:var(--text-3);margin-left:2px}
+.stat .l{color:var(--text-3);font-size:13px}
+.stat .trend{font-size:12px;color:var(--success)}
+.stat .trend.down{color:var(--danger)}
+
+/* ========== 分页 ========== */
+.pager{display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:18px;color:var(--text-3);font-size:13px}
+.pager a{min-width:30px;height:30px;padding:0 6px;display:grid;place-items:center;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text-2);transition:.2s}
+.pager a:hover{border-color:var(--primary);color:var(--primary)}
+.pager a.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.pager .total{margin-right:auto}
+
+/* ========== 弹窗 ========== */
+.modal-mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(2px)}
+.modal-mask.show{display:flex}
+.modal{background:#fff;border-radius:14px;width:520px;max-width:92vw;max-height:88vh;overflow:auto;box-shadow:var(--shadow-lg);animation:pop .22s ease-out}
+.modal-hd{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:16px}
+.modal-hd .x{cursor:pointer;color:var(--text-3)}
+.modal-bd{padding:20px}
+.modal-ft{padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+@keyframes pop{from{transform:translateY(8px) scale(.98);opacity:0}}
+
+/* ========== 时间线 ========== */
+.timeline{position:relative;padding-left:24px}
+.tl-item{position:relative;padding-bottom:22px}
+.tl-item::before{content:"";position:absolute;left:-20px;top:5px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--primary);box-sizing:border-box;z-index:1}
+.tl-item::after{content:"";position:absolute;left:-15px;top:17px;bottom:-5px;width:2px;background:#E5E7EB}
+.tl-item:last-child{padding-bottom:0}
+.tl-item:last-child::after{display:none}
+.tl-item.done::before{background:var(--primary)}
+.tl-item.ok::before{background:var(--success);border-color:var(--success)}
+.tl-item.bad::before{background:var(--danger);border-color:var(--danger)}
+.tl-item.wait::before{border-color:#D1D5DB}
+.tl-item .t{font-weight:500}
+.tl-item .d{color:var(--text-3);font-size:12px}
+.tl-item .note{margin-top:6px;background:#F8FAFC;border-radius:6px;padding:8px 12px;color:var(--text-2);font-size:13px}
+
+/* ========== 提示条 ========== */
+.alert{position:relative;display:block;padding:11px 16px 11px 40px;border-radius:8px;font-size:13px;line-height:1.7}
+.alert svg.lucide{position:absolute;left:15px;top:14px}
+.alert-info{background:var(--primary-l);color:#1E40AF}
+.alert-warn{background:var(--warning-l);color:#92400E}
+.alert-danger{background:var(--danger-l);color:#991B1B}
+.alert-success{background:var(--success-l);color:#166534}
+
+/* ========== 描述列表 ========== */
+.desc{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 32px}
+.desc>div{display:flex;gap:12px;font-size:14px}
+.desc .k{color:var(--text-3);width:84px;flex-shrink:0}
+.desc .full{grid-column:span 2}
+
+/* ========== 无权限 / 空状态 ========== */
+.no-perm{text-align:center;padding:80px 20px}
+.no-perm-ic{width:72px;height:72px;margin:0 auto 18px;border-radius:50%;background:#F3F4F6;display:grid;place-items:center;color:var(--text-3)}
+.no-perm-ic svg.lucide{width:32px;height:32px}
+.no-perm h3{font-size:18px;margin-bottom:6px}
+.no-perm p{color:var(--text-3);margin-bottom:22px}
+.empty{text-align:center;padding:60px 20px;color:var(--text-3)}
+
+/* ========== 进度条 ========== */
+.bar{height:8px;border-radius:4px;background:#EEF1F5;overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:4px;background:var(--primary)}
+
+/* ========== 轻提示 / 原型导航按钮 ========== */
+.toast{position:fixed;top:24px;left:50%;transform:translate(-50%,-16px);background:#111827;color:#fff;padding:10px 18px;border-radius:8px;opacity:0;transition:.25s;z-index:300;display:flex;gap:8px;align-items:center;font-size:14px;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.proto-back{position:fixed;right:20px;bottom:20px;z-index:90;display:flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:18px;background:rgba(17,24,39,.82);color:#fff;font-size:13px;box-shadow:var(--shadow-lg);transition:.2s}
+.proto-back:hover{background:#111827;transform:translateY(-2px)}
+
+/* ========== 工具类 ========== */
+.flex{display:flex;align-items:center}
+.between{justify-content:space-between}
+.wrap-f{flex-wrap:wrap}
+.gap-4{gap:4px}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}.gap-24{gap:24px}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mt-24{margin-top:24px}
+.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.muted{color:var(--text-3)}
+.small{font-size:12px}
+.strong{font-weight:600}
+.ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.c-primary{color:var(--primary)}.c-red{color:var(--red)}.c-success{color:var(--success)}.c-warning{color:var(--warning)}.c-danger{color:var(--danger)}
+
+/* ---------- 页面私有样式 ---------- */
+
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.factor{display:flex;gap:14px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.factor:last-of-type{border:none}
+.factor .ic{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;flex-shrink:0}
+.factor .bd{flex:1}
+.factor .hd{display:flex;justify-content:space-between;margin-bottom:6px}
+.factor .hd b{font-weight:600}
+.factor .hd em{font-style:normal;color:var(--primary);font-weight:700;font-size:16px}
+.factor small{color:var(--text-3);font-size:12px;display:block;margin-bottom:6px}
+input[type=range]{width:100%;accent-color:var(--primary)}
+.sum{display:flex;justify-content:space-between;padding:12px 14px;border-radius:8px;background:var(--success-l);color:#166534;font-size:13px;margin-top:8px}
+.sum.bad{background:var(--danger-l);color:#991B1B}
+.sim-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.sim-item:last-child{border:none}
+.sim-item .no{width:24px;height:24px;border-radius:6px;background:var(--primary-l);color:var(--primary);display:grid;place-items:center;font-size:12px;font-weight:700}
+.sim-item .t{flex:1}
+.sim-item .p{color:var(--primary);font-weight:600}
+
+</style>
+<script>
+// 公共脚本：图标渲染、轻提示、弹窗、筛选标签切换
+function refreshIcons(){ window.lucide && lucide.createIcons(); }
+function toast(msg, icon){
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = '<i data-lucide="' + (icon || 'check-circle-2') + '"></i>' + msg;
+  document.body.appendChild(t); refreshIcons();
+  requestAnimationFrame(function(){ t.classList.add('show'); });
+  setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); }, 300); }, 2000);
+}
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+document.addEventListener('click', function(e){
+  var chip = e.target.closest('[data-chips] .chip');
+  if (chip) {
+    var group = chip.parentElement;
+    if (group.dataset.chips === 'single') group.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+    chip.classList.toggle('on');
+  }
+  if (e.target.classList.contains('modal-mask')) e.target.classList.remove('show');
+});
+document.addEventListener('DOMContentLoaded', refreshIcons);
+</script>
+
+</head>
+<body class="admin">
+
+<header class="admin-hd">
+  <a class="logo" href="dashboard.html"><span class="logo-ic"><i data-lucide="graduation-cap"></i></span><span><b>中南大学学工管理系统</b><small>社会实践基地资源库 · 管理后台</small></span></a>
+  <div class="admin-hd-r">
+    <label class="role-switch"><i data-lucide="repeat"></i>演示角色
+  <select onchange="switchRole(this.value)">
+    <option value="school">校级管理员</option><option value="college">院级管理员</option>
+  </select></label>
+    <a class="hd-ic" href="#" title="消息"><i data-lucide="bell"></i><em>5</em></a>
+    <div class="hd-me"><img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=80&h=80" alt="头像"><span data-only="school">王建国<small>校级管理员 · 校团委</small></span><span data-only="college">李敏<small>院级管理员 · 计算机学院</small></span></div>
+  </div>
+</header>
+<aside class="side"><a href="dashboard.html"><i data-lucide="layout-dashboard"></i><span>工作台</span></a>
+<div class="side-group">基地管理</div>
+<a href="../student/map.html?from=admin"><i data-lucide="map"></i><span>数字地图</span></a>
+<a href="bases.html"><i data-lucide="map-pinned"></i><span>实践基地管理</span></a>
+<a href="base-reports.html"><i data-lucide="file-check-2"></i><span>基地上报审核</span></a>
+<div class="side-group">资源配置</div>
+<a href="tags.html" data-lock><i data-lucide="tags"></i><span>专题标签库</span><em class="lock-tag">仅校级</em></a>
+<a href="ranking-config.html" data-lock><i data-lucide="trophy"></i><span>榜单配置</span><em class="lock-tag">仅校级</em></a>
+<div class="side-group">优秀案例</div>
+<a href="case-pool.html"><i data-lucide="inbox"></i><span>案例候选池</span></a>
+<a href="case-library.html"><i data-lucide="award"></i><span>优秀案例库</span></a>
+<div class="side-group">数据分析</div>
+<a href="data-board.html"><i data-lucide="bar-chart-3"></i><span>数据可视化看板</span></a>
+<a href="ai-insight.html" data-lock><i data-lucide="sparkles"></i><span>AI 数据洞察</span><em class="lock-tag">仅校级</em></a>
+<div class="side-group">AI 智能匹配</div>
+<a href="ai-weights.html" class="on" data-lock><i data-lucide="sliders-horizontal"></i><span>因子权重配置</span><em class="lock-tag">仅校级</em></a>
+<a href="ai-effect.html" data-lock><i data-lucide="activity"></i><span>推荐效果数据</span><em class="lock-tag">仅校级</em></a>
+<a href="ai-blacklist.html" data-lock><i data-lucide="ban"></i><span>推荐黑名单</span><em class="lock-tag">仅校级</em></a>
+<div class="side-group">系统</div>
+<a href="operation-logs.html"><i data-lucide="scroll-text"></i><span>操作日志</span></a>
+<a href="second-classroom.html"><i data-lucide="external-link"></i><span>第二课堂联动</span></a></aside>
+<main class="admin-main">
+<div class="crumb"><span>社会实践基地资源库</span><i data-lucide="chevron-right"></i><span>AI 智能匹配</span><i data-lucide="chevron-right"></i><b>因子权重配置</b></div>
+<div data-only="school"><div class="page-hd">
+  <div><h1>AI 智能匹配配置</h1><p>调整推荐因子权重、查看效果数据、设置推荐黑名单；所有参数修改记录写入操作日志</p></div>
+  <div class="actions"><button class="btn" onclick="toast('已恢复为默认权重')">恢复默认</button><button class="btn btn-primary" onclick="save()"><i data-lucide="save"></i>保存并发布</button></div>
+</div>
+<div class="tabs"><a class="on" href="ai-weights.html"><i data-lucide="sliders-horizontal"></i>因子权重</a><a href="ai-effect.html"><i data-lucide="activity"></i>效果数据</a><a href="ai-blacklist.html"><i data-lucide="ban"></i>推荐黑名单</a></div>
+
+<div class="layout">
+  <div class="card">
+    <div class="card-hd"><h3>匹配因子权重</h3><span class="muted small">当前版本 v1.6 · 2026-10-26 11:02 发布</span></div>
+    <div class="card-bd">
+      <div class="factor"><span class="ic" style="background:#EFF4FF;color:#2563EB"><i data-lucide="graduation-cap"></i></span><div class="bd"><div class="hd"><b>专业权重</b><em id="v0">40%</em></div><small>学生学院、专业、年级与基地实践方向的相关度</small><input type="range" min="0" max="100" value="40" data-i="0"></div></div>
+      <div class="factor"><span class="ic" style="background:#EAF7EE;color:#16A34A"><i data-lucide="map-pin"></i></span><div class="bd"><div class="hd"><b>地理位置权重</b><em id="v1">25%</em></div><small>意向实践地点与基地距离、生源地</small><input type="range" min="0" max="100" value="25" data-i="1"></div></div>
+      <div class="factor"><span class="ic" style="background:#FDEDEF;color:#C8102E"><i data-lucide="tags"></i></span><div class="bd"><div class="hd"><b>实践主题标签权重</b><em id="v2">35%</em></div><small>申报主题标签、浏览行为与过往实践标签</small><input type="range" min="0" max="100" value="35" data-i="2"></div></div>
+      <div class="sum" id="sum"><span>当前合计</span><b>100%</b></div>
+      <div class="alert alert-info mt-16"><i data-lucide="info"></i>学生「不感兴趣」反馈会自动降低同类基地在该学生结果中的排序，不受全局权重影响。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><h3>推荐结果模拟</h3><select class="select" style="width:220px"><option>样本：计算机学院 · 软件工程 · 意向湖南 · 乡村振兴</option><option>样本：医学院 · 临床医学 · 意向长沙 · 健康中国</option></select></div>
+    <div class="card-bd" id="sim"></div>
+  </div>
+</div>
+
+<div class="card mt-16">
+  <div class="card-hd"><h3>版本记录</h3></div>
+  <table class="table">
+    <thead><tr><th>版本</th><th>专业</th><th>地理位置</th><th>主题标签</th><th>发布人</th><th>发布时间</th><th>发布后点击率</th></tr></thead>
+    <tbody>
+      <tr><td><b>v1.6</b> <span class="tag tag-green">当前</span></td><td>40%</td><td>25%</td><td>35%</td><td>王建国</td><td class="num muted">2026-10-26 11:02</td><td class="muted">统计中</td></tr>
+      <tr><td>v1.5</td><td>40%</td><td>20%</td><td>40%</td><td>王建国</td><td class="num muted">2026-09-01 09:30</td><td class="num">18.6%</td></tr>
+      <tr><td>v1.4</td><td>50%</td><td>20%</td><td>30%</td><td>王建国</td><td class="num muted">2026-06-15 14:12</td><td class="num">15.2%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+const ITEMS = [['十八洞村乡村振兴示范点', [.5, .9, 1]], ['国家超级计算长沙中心', [1, .9, .3]], ['三一重工“灯塔工厂”', [.8, .9, .4]], ['浏阳大围山镇乡村振兴点', [.3, .8, 1]], ['华为松山湖研发基地', [1, .3, .2]]];
+const weights = () => [...document.querySelectorAll('input[type=range]')].map(r => +r.value);
+function sim(){
+  const w = weights();
+  const list = ITEMS.map(([n, f]) => [n, f.reduce((s, v, i) => s + v * w[i], 0)]).sort((a, b) => b[1] - a[1]);
+  document.getElementById('sim').innerHTML = list.map((x, i) => `<div class="sim-item"><span class="no">${i + 1}</span><span class="t">${x[0]}</span><span class="p num">${Math.round(x[1])}%</span></div>`).join('')
+    + '<div class="muted small mt-12">拖动左侧权重滑块，实时查看推荐排序变化</div>';
+}
+document.querySelectorAll('input[type=range]').forEach(r => r.addEventListener('input', () => {
+  document.getElementById('v' + r.dataset.i).textContent = r.value + '%';
+  const t = weights().reduce((a, b) => a + b, 0), box = document.getElementById('sum');
+  box.classList.toggle('bad', t !== 100); box.innerHTML = `<span>${t === 100 ? '当前合计' : '合计须为 100%，当前'}</span><b>${t}%</b>`; sim();
+}));
+function save(){ const t = weights().reduce((a, b) => a + b, 0); toast(t === 100 ? '已发布 v1.7，修改前后内容已写入操作日志' : '权重合计须为 100%', t === 100 ? 'check-circle-2' : 'alert-circle'); }
+sim();
+</script>
+</div>
+<div data-only="college" class="no-perm card">
+  <div class="no-perm-ic"><i data-lucide="shield-off"></i></div>
+  <h3>暂无访问权限</h3>
+  <p>「AI 因子权重配置」仅对校级管理员开放，院级管理员可在工作台接收相关推送。</p>
+  <div class="flex gap-12" style="justify-content:center"><a class="btn" href="dashboard.html">返回工作台</a><button class="btn btn-primary" onclick="switchRole('school')">切换为校级管理员演示</button></div>
+</div>
+</main>
+
+<a class="proto-back" href="../index.html" title="返回原型导航页"><i data-lucide="layout-grid"></i>原型导航</a>
+<script>document.querySelectorAll('.role-switch select').forEach(function(s){s.value=document.documentElement.dataset.role;});</script>
+</body>
+</html>

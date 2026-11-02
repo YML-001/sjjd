@@ -1,0 +1,274 @@
+---
+title: 上报审核详情
+layout: admin
+menu: base-reports
+crumb: 社会实践基地资源库 / 基地上报审核 / 审核详情
+---
+<style>
+.layout{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+.stack{display:grid;gap:16px}
+.pics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.pics img{height:110px;width:100%;border-radius:8px;object-fit:cover}
+.desc .k{width:112px}
+.plaque{width:160px;height:110px;border-radius:8px;object-fit:cover}
+.check-list div{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 0}
+.check-list .ok{color:var(--success)}
+.check-list .warn{color:var(--warning)}
+.decide{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.decide label{display:flex;align-items:center;justify-content:center;gap:6px;height:42px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-weight:500;transition:.2s}
+.decide input{display:none}
+.decide label.pass.on{border-color:var(--success);background:var(--success-l);color:var(--success)}
+.decide label.rej.on{border-color:var(--danger);background:var(--danger-l);color:var(--danger)}
+.sticky{position:sticky;top:76px;display:grid;gap:16px}
+</style>
+
+<div class="page-hd">
+  <div><h1>长沙人工智能创新中心 <span class="status s-pending" style="font-size:14px;vertical-align:middle">待审核</span></h1><p>上报编号 SB-20261026-007 · 计算机学院 · 李敏 · 提交于 2026-10-26 16:20 · 上报类型：新增基地</p></div>
+  <div class="actions"><a class="btn" href="base-reports.html"><i data-lucide="arrow-left"></i>返回列表</a></div>
+</div>
+
+<div class="layout">
+  <div class="stack">
+    <div class="card">
+      <div class="card-hd"><h3>基地信息</h3></div>
+      <div class="card-bd desc">
+        <div><span class="k">基地编号</span><span class="num">SJJD-1793344976288</span></div>
+        <div><span class="k">基地名称</span><span>长沙人工智能创新中心</span></div>
+        <div><span class="k">牵头单位</span><span>计算机学院</span></div>
+        <div><span class="k">共建单位</span><span>长沙人工智能产业发展有限公司</span></div>
+        <div><span class="k">单位类型</span><span>企业单位</span></div>
+        <div><span class="k">基地类型</span><span>校企培优实践基地</span></div>
+        <div class="full"><span class="k">实践主题</span><span class="flex gap-8 wrap-f"><span class="tag tag-c" style="--c:#0891B2">攀高攻坚</span><span class="tag tag-c" style="--c:#0EA5E9">行业认知</span></span></div>
+        <div class="full"><span class="k">合作模式</span><span class="muted">源码未找到可选项</span></div>
+        <div><span class="k">岗位数量</span><span>单次可接待 30 人</span></div>
+        <div><span class="k">所在地区</span><span>湖南省长沙市</span></div>
+        <div class="full"><span class="k">详细地址</span><span>湖南省长沙市岳麓区麓谷大道 627 号</span></div>
+        <div><span class="k">基地经度</span><span class="num">112.88</span></div>
+        <div><span class="k">基地纬度</span><span class="num">28.23</span></div>
+        <div class="full"><span class="k">实践方向</span><span>行业认知、企业见习、科技志愿服务</span></div>
+        <div class="full"><span class="k">基地简介</span><span class="muted">长沙人工智能创新中心聚焦大模型与智能计算产业，设有 AI 产业展厅、算力调度中心与创业孵化空间，可承接人工智能行业认知、企业见习与科技志愿服务等实践活动。</span></div>
+        <div><span class="k">基地联系人</span><span>吴经理</span></div>
+        <div><span class="k">联系人电话</span><span class="num">0731-8899 1020</span></div>
+        <div><span class="k">开放时间</span><span>周一至周五 9:00 至 16:00</span></div>
+        <div><span class="k">优秀案例</span><span>算力强国：超算中心科普进中小学</span></div>
+        <div><span class="k">基地状态</span><span>正常</span></div>
+        <div><span class="k">学生评价</span><span class="num">5 分</span></div>
+        <div><span class="k">是否授牌</span><span>是</span></div>
+        <div><span class="k">授牌情况</span><span>授牌并签订协议</span></div>
+        <div><span class="k">授牌数量</span><span class="num">1</span></div>
+        <div><span class="k">合作截止</span><span class="num">2029-09-30</span></div>
+        <div><span class="k">学校负责人</span><span>李敏</span></div>
+        <div><span class="k">负责人电话</span><span class="num">0731-8883 1020</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><h3>基地照片与扫描件</h3></div>
+      <div class="card-bd">
+        <div class="small muted mb-12">基地照片</div>
+        <div class="pics" data-shots="基地照片"><img src="{{img:data:300x200}}" alt="基地照片"><img src="{{img:students:300x200}}" alt="基地照片"><img src="{{img:building:300x200}}" alt="基地照片"><img src="{{img:meeting:300x200}}" alt="基地照片"></div>
+        <div class="flex gap-16 mt-16" style="align-items:flex-start">
+          <div>
+            <div class="small muted mb-8">协议扫描件</div>
+            <a class="btn btn-sm" onclick="toast('预览：共建协议.pdf','eye')"><i data-lucide="file-text"></i>共建协议.pdf</a>
+          </div>
+          <div>
+            <div class="small muted mb-8">牌匾扫描件</div>
+            <img class="plaque" data-shot="牌匾扫描件" src="{{img:library:320x200}}" alt="牌匾扫描件">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><h3>系统预检</h3><span class="muted small">提交时自动校验</span></div>
+      <div class="card-bd check-list">
+        <div class="ok"><i data-lucide="circle-check"></i>必填信息完整（12 / 12）</div>
+        <div class="ok"><i data-lucide="circle-check"></i>未发现重名或同址重复基地</div>
+        <div class="ok"><i data-lucide="circle-check"></i>共建协议在有效期内（2026-10 至 2029-09）</div>
+        <div class="warn"><i data-lucide="alert-triangle"></i>附近 5 公里内已有 2 个同主题基地（国家超级计算长沙中心、华为松山湖研发基地），请关注差异化定位</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sticky">
+    <div class="card" data-only="school">
+      <div class="card-hd"><h3>审核操作</h3></div>
+      <div class="card-bd">
+        <div class="decide" id="decide">
+          <label class="pass on"><input type="radio" name="d" checked><i data-lucide="check"></i>审核通过</label>
+          <label class="rej"><input type="radio" name="d"><i data-lucide="undo-2"></i>驳回修改</label>
+        </div>
+        <div class="field"><label><span class="req">*</span>审核意见</label><textarea class="textarea" id="opinion">资料齐全，基地定位清晰，同意上线。</textarea></div>
+        <div class="chips mt-8" id="phrases"><span class="chip">资料齐全，同意上线</span><span class="chip">缺少共建协议</span><span class="chip">接待容量需核实</span></div>
+        <div class="alert alert-info mt-16"><i data-lucide="info"></i>通过后基地立即上线数字地图并参与 AI 匹配；审核结果将通知上报人。</div>
+        <button class="btn btn-primary btn-lg mt-16" style="width:100%" onclick="toast('审核已提交，操作已记录日志');setTimeout(()=>location.href='base-reports.html',900)">提交审核结果</button>
+      </div>
+    </div>
+    <div class="card" data-only="college">
+      <div class="card-hd"><h3>当前状态</h3></div>
+      <div class="card-bd">
+        <div class="alert alert-warn"><i data-lucide="hourglass"></i>已提交，等待校级管理员审核。审核前可撤回修改。</div>
+        <div class="flex gap-12 mt-16"><a class="btn" style="flex:1" href="base-edit.html">撤回并修改</a></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><h3>审核记录</h3></div>
+      <div class="card-bd timeline">
+        <div class="tl-item done"><div class="t">李敏 提交上报</div><div class="d">计算机学院 · 2026-10-26 16:20</div></div>
+        <div class="tl-item done"><div class="t">系统预检完成</div><div class="d">1 条提示 · 2026-10-26 16:20</div></div>
+        <div class="tl-item"><div class="t">校级管理员审核</div><div class="d">待处理</div></div>
+        <div class="tl-item wait"><div class="t">上线数字地图</div><div class="d">审核通过后自动执行</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('decide').addEventListener('click', e => {
+  const l = e.target.closest('label'); if (!l) return;
+  document.querySelectorAll('#decide label').forEach(x => x.classList.remove('on')); l.classList.add('on');
+});
+document.getElementById('phrases').addEventListener('click', e => { if (e.target.classList.contains('chip')) document.getElementById('opinion').value = e.target.textContent; });
+</script>
+
+<!-- 内容图灯箱 -->
+<script>
+// 内容图灯箱：点哪张看哪张；同一组可左右切换。关闭大图不离开当前页，也不关掉底下的弹窗。
+(function () {
+  if (document.getElementById('shotViewer')) return;
+  var css = document.createElement('style');
+  css.textContent = ''
+    + 'img[data-shot],[data-shots] img{cursor:zoom-in}'
+    + '.shot-viewer{position:fixed;inset:0;z-index:240;background:rgba(15,23,42,.86);display:none;align-items:center;justify-content:center}'
+    + '.shot-viewer.show{display:flex}'
+    + '.shot-viewer img{flex:0 0 auto;max-width:min(1080px,82vw);max-height:82vh;width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,.45);background:#111827;cursor:default}'
+    + '.shot-viewer .x,.shot-viewer .nav{position:absolute;z-index:2;display:grid;place-items:center;cursor:pointer;color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.28);user-select:none}'
+    + '.shot-viewer .x{right:22px;top:18px;width:36px;height:36px;border-radius:50%}'
+    + '.shot-viewer .nav{top:50%;width:42px;height:64px;margin-top:-32px;border-radius:8px}'
+    + '.shot-viewer .prev{left:18px}.shot-viewer .next{right:18px}'
+    + '.shot-viewer .cap{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#E5E7EB;font-size:13px;letter-spacing:1px;pointer-events:none}';
+  document.head.appendChild(css);
+
+  var box = document.createElement('div');
+  box.className = 'shot-viewer';
+  box.id = 'shotViewer';
+  box.innerHTML = '<span class="x" title="关闭"><i data-lucide="x"></i></span>'
+    + '<span class="nav prev" title="上一张"><i data-lucide="chevron-left"></i></span>'
+    + '<img alt="大图">'
+    + '<span class="nav next" title="下一张"><i data-lucide="chevron-right"></i></span>'
+    + '<span class="cap">图片</span>';
+  document.body.appendChild(box);
+
+  var urls = [], index = 0, label = '图片';
+  var big = box.querySelector('img');
+  var cap = box.querySelector('.cap');
+  var prev = box.querySelector('.prev');
+  var next = box.querySelector('.next');
+
+  function enlarge(src) {
+    var w = /[?&]w=(\d+)/.exec(src);
+    var h = /[?&]h=(\d+)/.exec(src);
+    if (!w) return src;
+    var nw = 1600;
+    var nh = h ? Math.max(1, Math.round(Number(h[1]) * nw / Number(w[1]))) : 0;
+    var out = src.replace(/([?&])w=\d+/, '$1w=' + nw);
+    if (nh) out = out.replace(/([?&])h=\d+/, '$1h=' + nh);
+    return out;
+  }
+  var token = 0;
+  function fit() {
+    if (!big.naturalWidth || !big.naturalHeight) return;
+    var maxW = Math.min(1080, window.innerWidth * 0.82);
+    var maxH = window.innerHeight * 0.82;
+    var scale = Math.min(maxW / big.naturalWidth, maxH / big.naturalHeight);
+    big.style.width = Math.max(1, Math.round(big.naturalWidth * scale)) + 'px';
+    big.style.height = Math.max(1, Math.round(big.naturalHeight * scale)) + 'px';
+  }
+  function paint() {
+    var my = ++token;
+    var thumb = urls[index];
+    var full = enlarge(thumb);
+    function apply(src) {
+      if (my !== token) return;
+      if (big.src === src && big.complete && big.naturalWidth) { fit(); return; }
+      big.onload = function () { if (my === token) fit(); };
+      big.src = src;
+      if (my === token && big.complete && big.naturalWidth) fit();
+    }
+    // 先用页面上已经加载的缩略图撑开大图，再换成更高清的地址
+    apply(thumb);
+    if (full !== thumb) {
+      var pre = new Image();
+      pre.onload = function () { apply(full); };
+      pre.src = full;
+    }
+    cap.textContent = label + ' ' + (index + 1) + ' / ' + urls.length;
+    var single = urls.length < 2;
+    prev.style.display = single ? 'none' : '';
+    next.style.display = single ? 'none' : '';
+  }
+
+  function open(list, i, lab) {
+    urls = list;
+    index = i;
+    label = lab || '图片';
+    paint();
+    box.classList.add('show');
+    if (window.refreshIcons) refreshIcons();
+  }
+  function step(d) {
+    if (urls.length < 2) return;
+    index = (index + d + urls.length) % urls.length;
+    paint();
+  }
+  function close() { box.classList.remove('show'); }
+
+  box.addEventListener('click', function (e) { if (e.target === box) close(); });
+  box.querySelector('.x').addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    close();
+  });
+  prev.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(-1);
+  });
+  next.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    step(1);
+  });
+
+  function shotFromEvent(e) {
+    var t = e.target;
+    if (!t) return null;
+    if (t.nodeType !== 1) t = t.parentElement;
+    if (!t || !t.closest) return null;
+    var im = t.closest('img');
+    if (!im || im.closest('.shot-viewer')) return null;
+    if (!im.hasAttribute('data-shot') && !im.closest('[data-shots]')) return null;
+    return im;
+  }
+  function onPick(e) {
+    var im = shotFromEvent(e);
+    if (!im) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var group = im.closest('[data-shots]');
+    if (group) {
+      var imgs = Array.prototype.slice.call(group.querySelectorAll('img'));
+      open(imgs.map(function (el) { return el.currentSrc || el.src; }), Math.max(0, imgs.indexOf(im)), group.getAttribute('data-shots') || '图片');
+    } else {
+      open([im.currentSrc || im.src], 0, im.getAttribute('data-shot') || '图片');
+    }
+  }
+  document.addEventListener('click', onPick, true);
+  document.addEventListener('auxclick', onPick, true);
+  document.addEventListener('keydown', function (e) {
+    if (!box.classList.contains('show')) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+  }, true);
+})();
+</script>

@@ -1,0 +1,104 @@
+---
+title: AI 数据洞察
+layout: admin
+menu: ai-insight
+only: school
+crumb: 社会实践基地资源库 / 数据分析 / AI 数据洞察
+inject: echarts
+---
+<style>
+.ins-hd{position:relative;border-radius:14px;padding:22px 26px;color:#fff;overflow:hidden;background:linear-gradient(120deg,#1E1B4B,#3730A3 50%,#2563EB);margin-bottom:16px;display:flex;align-items:center;gap:20px}
+.ins-hd::after{content:"";position:absolute;right:-40px;top:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(167,139,250,.45),transparent 70%)}
+.ins-hd h1{font-size:20px;display:flex;align-items:center;gap:8px}
+.ins-hd p{opacity:.8;font-size:13px;margin-top:4px}
+.ins-hd .acts{margin-left:auto;display:flex;gap:10px;position:relative;z-index:1}
+.ins-hd .btn{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
+.ins-hd .btn:hover{background:rgba(255,255,255,.24)}
+.sum4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.sum4 a{display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:12px;background:#fff;border:1px solid #ECEEF2;transition:.2s}
+.sum4 a:hover{border-color:#C7D2FE;box-shadow:0 8px 20px rgba(79,70,229,.08)}
+.sum4 .ic{width:42px;height:42px;border-radius:10px;display:grid;place-items:center}
+.sum4 b{font-size:22px;display:block;line-height:1.2}
+.sum4 small{color:var(--text-3);font-size:12px}
+.grid-main{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+.chart{height:300px}
+.chart-wrap{position:relative}
+.pop-warn{position:absolute;right:14px;top:6px;width:250px;background:#fff;border-radius:10px;box-shadow:0 12px 30px rgba(15,23,42,.16);border:1px solid #FECDD3;padding:12px 14px;font-size:13px;z-index:2}
+.pop-warn b{color:#BE123C;display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.sugg{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.sugg div{padding:14px 16px;border-radius:10px;background:#F8FAFF;border:1px solid #E0E7FF}
+.sugg b{display:flex;align-items:center;gap:6px;font-size:14px;color:#3730A3}
+.sugg p{font-size:13px;color:var(--text-2);margin-top:6px}
+.lv{font-size:12px;padding:1px 8px;border-radius:4px}
+.lv.h{background:#FDECEC;color:#B91C1C}.lv.m{background:#FEF4E4;color:#B45309}
+</style>
+
+<div class="ins-hd">
+  <div><h1><i data-lucide="sparkles"></i>AI 数据洞察 · 管理者决策辅助</h1><p>基于第二课堂申报与浏览数据，预测下学期资源热度、识别资源缺口并输出建设建议 · 模型更新于今天 02:00</p></div>
+  <div class="acts"><button class="btn" onclick="toast('正在生成 AI 洞察报告 PDF')"><i data-lucide="file-text"></i>导出 PDF</button><button class="btn" onclick="toast('正在导出 Excel')"><i data-lucide="file-spreadsheet"></i>导出 Excel</button></div>
+</div>
+
+<div class="sum4">
+  <a href="#heat"><span class="ic" style="background:#EEF2FF;color:#4F46E5"><i data-lucide="trending-up"></i></span><span><b class="num">+23.6%</b><small>下学期实践热度预测</small></span></a>
+  <a href="#warn"><span class="ic" style="background:#FDECEC;color:#DC2626"><i data-lucide="siren"></i></span><span><b class="num">3</b><small>紧缺基地预警</small></span></a>
+  <a href="#demand"><span class="ic" style="background:#FEF4E4;color:#D97706"><i data-lucide="flame"></i></span><span><b>乡村振兴</b><small>需求增速最快主题</small></span></a>
+  <a href="#sugg"><span class="ic" style="background:#EAF7EE;color:#16A34A"><i data-lucide="lightbulb"></i></span><span><b class="num">5</b><small>资源建设建议</small></span></a>
+</div>
+
+<div class="grid-main">
+  <div class="card" id="heat">
+    <div class="card-hd"><h3>基地实践热度预测 · 韶山毛泽东同志纪念馆</h3><select class="select" style="width:200px"><option>韶山毛泽东同志纪念馆</option><option>十八洞村乡村振兴示范点</option><option>三一重工“灯塔工厂”</option></select></div>
+    <div class="card-bd chart-wrap">
+      <div class="pop-warn"><b><i data-lucide="siren"></i>资源紧缺预警</b>预测 2027 春季实践人次 1,180，超出接待上限 1,000 人次（+18%）。建议拓展同类「革命文化」主题基地或提升接待批次。</div>
+      <div class="chart" id="c1"></div>
+    </div>
+  </div>
+  <div class="card" id="demand">
+    <div class="card-hd"><h3>实践主题需求洞察</h3><span class="muted small">学生申报量 vs 基地供给</span></div>
+    <div class="card-bd"><div class="chart" id="c2"></div></div>
+  </div>
+</div>
+
+<div class="card mt-16" id="warn">
+  <div class="card-hd"><h3>资源紧缺预警清单</h3><button class="btn btn-sm btn-red" onclick="toast('已一键推送至 3 个相关学院管理员')"><i data-lucide="send"></i>全部推送院级</button></div>
+  <table class="table">
+    <thead><tr><th>基地</th><th>归属</th><th class="r">接待上限</th><th class="r">预测实践人次</th><th>超出</th><th>预警级别</th><th>AI 建议</th><th>推送状态</th><th>操作</th></tr></thead>
+    <tbody>
+      <tr><td><b style="font-weight:500">韶山毛泽东同志纪念馆</b></td><td>校级 · 校团委</td><td class="r num">1,000</td><td class="r num c-danger strong">1,180</td><td class="c-danger num">+18%</td><td><span class="lv h">高</span></td><td class="small">拓展同类革命文化基地；协调增加周末批次</td><td><span class="status s-cancel">未推送</span></td><td><button class="btn btn-sm" onclick="toast('已推送至马克思主义学院、文学院管理员')">推送院级</button></td></tr>
+      <tr><td><b style="font-weight:500">十八洞村乡村振兴示范点</b></td><td>校级 · 校团委</td><td class="r num">480</td><td class="r num c-danger strong">560</td><td class="c-danger num">+17%</td><td><span class="lv h">高</span></td><td class="small">新增湘西州内乡村振兴点 1-2 个</td><td><span class="status s-cancel">未推送</span></td><td><button class="btn btn-sm" onclick="toast('已推送至经济管理学院管理员')">推送院级</button></td></tr>
+      <tr><td><b style="font-weight:500">国家超级计算长沙中心</b></td><td>院级 · 计算机学院</td><td class="r num">360</td><td class="r num c-warning strong">420</td><td class="c-warning num">+12%</td><td><span class="lv m">中</span></td><td class="small">与基地协商增加接待批次</td><td><span class="status s-pass">已推送 10-25</span></td><td><a class="btn-text" href="operation-logs.html">推送记录</a></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card mt-16" id="sugg">
+  <div class="card-hd"><h3>资源建设建议</h3><span class="muted small">AI 生成 · 供决策参考</span></div>
+  <div class="card-bd sugg">
+    <div><b><i data-lucide="map-pin-plus"></i>新增乡村振兴类基地</b><p>乡村振兴主题申报量同比 +41%，基地供给仅 +8%，建议在湘西、怀化新增 2-3 个示范点。</p></div>
+    <div><b><i data-lucide="book-open"></i>补充优秀教学案例</b><p>「大国重器」主题浏览量高但案例仅 12 个，建议推动相关学院推荐优质结项项目入库。</p></div>
+    <div><b><i data-lucide="users-round"></i>提升热门基地接待容量</b><p>韶山、十八洞村寒暑假集中度超 70%，建议错峰开放并引导学期中开展实践。</p></div>
+  </div>
+</div>
+
+<script>
+echarts.init(document.getElementById('c1')).setOption({
+  tooltip: { trigger: 'axis' }, legend: { left: 0, top: 0, data: ['历史实践人次', 'AI 预测'] }, grid: { left: 50, right: 280, top: 40, bottom: 30 },
+  xAxis: { type: 'category', data: ['2025 春', '2025 秋', '2026 春', '2026 秋', '2027 春（预测）'], axisLine: { lineStyle: { color: '#CBD5E1' } } },
+  yAxis: { type: 'value', max: 1400, splitLine: { lineStyle: { color: '#F1F5F9' } } },
+  series: [
+    { name: '历史实践人次', type: 'line', symbolSize: 8, data: [520, 760, 880, 960, null], itemStyle: { color: '#2563EB' }, lineStyle: { width: 3 },
+      markLine: { symbol: 'none', lineStyle: { color: '#DC2626', type: 'dashed' }, label: { formatter: '接待上限 1,000', color: '#DC2626', position: 'insideStartTop' }, data: [{ yAxis: 1000 }] } },
+    { name: 'AI 预测', type: 'line', symbolSize: 10, data: [null, null, null, 960, 1180], itemStyle: { color: '#DC2626' }, lineStyle: { type: 'dashed', width: 3 },
+      markPoint: { symbol: 'pin', symbolSize: 46, data: [{ coord: [4, 1180], value: '超限' }], itemStyle: { color: '#DC2626' } }, areaStyle: { color: 'rgba(220,38,38,.06)' } }
+  ]
+});
+echarts.init(document.getElementById('c2')).setOption({
+  tooltip: { trigger: 'axis' }, legend: { right: 0, top: 0 }, grid: { left: 40, right: 10, top: 40, bottom: 30 },
+  xAxis: { type: 'category', data: ['乡村振兴', '大国重器', '革命文化', '行业认知', '社区服务'], axisLine: { lineStyle: { color: '#CBD5E1' } }, axisLabel: { fontSize: 11 } },
+  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#F1F5F9' } } },
+  series: [
+    { name: '学生申报量', type: 'bar', barWidth: 16, data: [530, 360, 325, 210, 140], itemStyle: { color: '#4F46E5', borderRadius: [4, 4, 0, 0] } },
+    { name: '基地可承接量', type: 'bar', barWidth: 16, data: [380, 260, 410, 240, 200], itemStyle: { color: '#C7D2FE', borderRadius: [4, 4, 0, 0] } }
+  ]
+});
+</script>
